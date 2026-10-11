@@ -6,6 +6,7 @@ namespace App\Infrastructure\Persistence\Eloquent;
 
 use App\Domain\Company\Repositories\CompanyRepositoryInterface;
 use App\Models\Company;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 final class CompanyEloquentRepository implements CompanyRepositoryInterface
@@ -13,6 +14,11 @@ final class CompanyEloquentRepository implements CompanyRepositoryInterface
     public function all(): Collection
     {
         return Company::query()->orderBy('name')->get();
+    }
+
+    public function paginate(int $perPage): LengthAwarePaginator
+    {
+        return Company::query()->orderBy('name')->paginate($perPage);
     }
 
     public function findBySlug(string $slug): ?Company

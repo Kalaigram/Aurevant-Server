@@ -56,4 +56,62 @@ class CompanyTest extends TestCase
             $response->json('data.*.name')
         );
     }
+
+    public function test_paginasi_dibatasi_dan_ada_meta(): void
+    {
+        $user = User::factory()->create();
+        Company::create(['name' => 'A', 'slug' => 'a', 'status' => 'trial']);
+        Company::create(['name' => 'B', 'slug' => 'b', 'status' => 'trial']);
+        Company::create(['name' => 'C', 'slug' => 'c', 'status' => 'trial']);
+
+        $response = $this->actingAs($user, 'sanctum')->getJson('/api/v1/companies?per_page=2');
+
+        $response->assertOk()->assertJson([
+            'status' => 'success',
+            'meta' => ['current_page' => 1, 'per_page' => 2, 'total' => 3, 'last_page' => 2],
+        ]);
+        $this->assertCount(2, $response->json('data'));
+    }
+
+    public function test_per_page_lewat_batas_ditolak_422(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user, 'sanctum')->getJson('/api/v1/companies?per_page=999')
+            ->assertUnprocessable()
+            ->assertJson([
+                'status' => 'error',
+                'message' => 'Validasi gagal.',
+            ])
+            ->assertJsonValidationErrors('per_page');
+    }
+
+    public function test_api_dibatasi_rate_limit(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user, 'sanctum')->getJson('/api/v1/companies')
+            ->assertOk()
+            ->assertHeader('X-RateLimit-Limit', '60');
+    }
+
+    public function test_cors_hanya_mengizinkan_frontend_terdaftar(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['Origin' => 'http://localhost:5173'])
+            ->getJson('/api/v1/companies')
+            ->assertHeader('Access-Control-Allow-Origin', 'http://localhost:5173');
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->withHeaders(['Origin' => 'https://situs-asing.test'])
+            ->getJson('/api/v1/companies');
+
+        $response->assertOk();
+        $this->assertNotEquals(
+            'https://situs-asing.test',
+            $response->headers->get('Access-Control-Allow-Origin')
+        );
+    }
 }
