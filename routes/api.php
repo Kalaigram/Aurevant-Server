@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CompanyController;
 use App\Http\Controllers\Api\V1\ItemController;
 use App\Http\Controllers\Api\V1\StockController;
+use App\Http\Controllers\Api\V1\StockOpnameController;
 use App\Http\Controllers\Api\V1\StockTransferController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -45,6 +46,12 @@ Route::middleware('throttle:api')->prefix('v1')->group(function (): void {
         Route::post('/companies/{company}/stock-transfers/{transfer}/ship', [StockTransferController::class, 'ship']);
         Route::post('/companies/{company}/stock-transfers/{transfer}/receive', [StockTransferController::class, 'receive']);
         Route::post('/companies/{company}/stock-transfers/{transfer}/cancel', [StockTransferController::class, 'cancel']);
+        Route::get('/companies/{company}/branches/{branch}/stock/opnames', [StockOpnameController::class, 'index']);
+        Route::post('/companies/{company}/branches/{branch}/stock/opnames', [StockOpnameController::class, 'store']);
+        Route::get('/companies/{company}/branches/{branch}/stock/opnames/{opname}', [StockOpnameController::class, 'show']);
+        Route::post('/companies/{company}/branches/{branch}/stock/opnames/{opname}/submit', [StockOpnameController::class, 'submit']);
+        Route::post('/companies/{company}/branches/{branch}/stock/opnames/{opname}/approve', [StockOpnameController::class, 'approve']);
+        Route::post('/companies/{company}/branches/{branch}/stock/opnames/{opname}/reject', [StockOpnameController::class, 'reject']);
     });
 });
 

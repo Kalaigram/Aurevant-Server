@@ -10,6 +10,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 interface StockBalanceRepositoryInterface
 {
+    public function find(int $branchId, int $itemId): ?StockBalance;
+
     public function findLocked(int $branchId, int $itemId): ?StockBalance;
 
     public function create(array $attributes): StockBalance;

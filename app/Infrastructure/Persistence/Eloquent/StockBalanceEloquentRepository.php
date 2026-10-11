@@ -11,6 +11,14 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 final class StockBalanceEloquentRepository implements StockBalanceRepositoryInterface
 {
+    public function find(int $branchId, int $itemId): ?StockBalance
+    {
+        return StockBalance::query()
+            ->where('branch_id', $branchId)
+            ->where('item_id', $itemId)
+            ->first();
+    }
+
     public function findLocked(int $branchId, int $itemId): ?StockBalance
     {
         return StockBalance::query()
