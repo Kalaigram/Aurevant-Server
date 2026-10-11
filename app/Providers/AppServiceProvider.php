@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Domain\Branch\Repositories\BranchRepositoryInterface;
 use App\Domain\Company\Repositories\CompanyRepositoryInterface;
 use App\Domain\User\Repositories\UserRepositoryInterface;
+use App\Infrastructure\Persistence\Eloquent\BranchEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\CompanyEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\UserEloquentRepository;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -20,6 +22,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(CompanyRepositoryInterface::class, CompanyEloquentRepository::class);
         $this->app->bind(UserRepositoryInterface::class, UserEloquentRepository::class);
+        $this->app->bind(BranchRepositoryInterface::class, BranchEloquentRepository::class);
     }
 
     /**
