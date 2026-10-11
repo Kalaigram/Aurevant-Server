@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Stock\Exceptions\InsufficientStockException;
 use App\Shared\Responses\ApiResponse;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
@@ -35,6 +36,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (ValidationException $e, Request $request) {
             if ($request->is('api/*')) {
                 return ApiResponse::error('Validasi gagal.', $e->errors(), 422);
+            }
+        });
+
+        $exceptions->render(function (InsufficientStockException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return ApiResponse::error($e->getMessage(), null, 422);
             }
         });
     })->create();
