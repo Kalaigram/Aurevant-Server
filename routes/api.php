@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CompanyController;
 use App\Http\Controllers\Api\V1\ItemController;
+use App\Http\Controllers\Api\V1\PurchaseOrderController;
 use App\Http\Controllers\Api\V1\StockController;
 use App\Http\Controllers\Api\V1\StockOpnameController;
 use App\Http\Controllers\Api\V1\StockTransferController;
@@ -58,6 +59,15 @@ Route::middleware('throttle:api')->prefix('v1')->group(function (): void {
         Route::get('/companies/{company}/suppliers/{supplier}', [SupplierController::class, 'show']);
         Route::put('/companies/{company}/suppliers/{supplier}', [SupplierController::class, 'update']);
         Route::delete('/companies/{company}/suppliers/{supplier}', [SupplierController::class, 'destroy']);
+        Route::get('/companies/{company}/purchase-orders', [PurchaseOrderController::class, 'index']);
+        Route::post('/companies/{company}/purchase-orders', [PurchaseOrderController::class, 'store']);
+        Route::get('/companies/{company}/purchase-orders/{order}', [PurchaseOrderController::class, 'show']);
+        Route::post('/companies/{company}/purchase-orders/{order}/submit', [PurchaseOrderController::class, 'submit']);
+        Route::post('/companies/{company}/purchase-orders/{order}/approve', [PurchaseOrderController::class, 'approve']);
+        Route::post('/companies/{company}/purchase-orders/{order}/order', [PurchaseOrderController::class, 'order']);
+        Route::post('/companies/{company}/purchase-orders/{order}/receive', [PurchaseOrderController::class, 'receive']);
+        Route::post('/companies/{company}/purchase-orders/{order}/cancel', [PurchaseOrderController::class, 'cancel']);
+        Route::get('/companies/{company}/purchase-orders/{order}/receipts', [PurchaseOrderController::class, 'receipts']);
     });
 });
 
