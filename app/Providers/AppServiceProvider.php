@@ -7,6 +7,10 @@ use App\Domain\Catalog\Repositories\CategoryRepositoryInterface;
 use App\Domain\Catalog\Repositories\ItemPriceRepositoryInterface;
 use App\Domain\Catalog\Repositories\ItemRepositoryInterface;
 use App\Domain\Company\Repositories\CompanyRepositoryInterface;
+use App\Domain\Purchase\Repositories\GoodsReceiptRepositoryInterface;
+use App\Domain\Purchase\Repositories\PurchaseOrderRepositoryInterface;
+use App\Domain\Purchase\Repositories\SupplierBillRepositoryInterface;
+use App\Domain\Purchase\Repositories\SupplierRepositoryInterface;
 use App\Domain\Stock\Repositories\StockBalanceRepositoryInterface;
 use App\Domain\Stock\Repositories\StockMovementRepositoryInterface;
 use App\Domain\Stock\Repositories\StockOpnameRepositoryInterface;
@@ -15,12 +19,16 @@ use App\Domain\User\Repositories\UserRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\BranchEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\CategoryEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\CompanyEloquentRepository;
+use App\Infrastructure\Persistence\Eloquent\GoodsReceiptEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\ItemEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\ItemPriceEloquentRepository;
+use App\Infrastructure\Persistence\Eloquent\PurchaseOrderEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\StockBalanceEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\StockMovementEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\StockOpnameEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\StockTransferEloquentRepository;
+use App\Infrastructure\Persistence\Eloquent\SupplierBillEloquentRepository;
+use App\Infrastructure\Persistence\Eloquent\SupplierEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\UserEloquentRepository;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -44,6 +52,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(StockMovementRepositoryInterface::class, StockMovementEloquentRepository::class);
         $this->app->bind(StockTransferRepositoryInterface::class, StockTransferEloquentRepository::class);
         $this->app->bind(StockOpnameRepositoryInterface::class, StockOpnameEloquentRepository::class);
+        $this->app->bind(SupplierRepositoryInterface::class, SupplierEloquentRepository::class);
+        $this->app->bind(PurchaseOrderRepositoryInterface::class, PurchaseOrderEloquentRepository::class);
+        $this->app->bind(GoodsReceiptRepositoryInterface::class, GoodsReceiptEloquentRepository::class);
+        $this->app->bind(SupplierBillRepositoryInterface::class, SupplierBillEloquentRepository::class);
     }
 
     /**
