@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CompanyController;
 use App\Http\Controllers\Api\V1\ItemController;
 use App\Http\Controllers\Api\V1\StockController;
+use App\Http\Controllers\Api\V1\StockTransferController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +37,14 @@ Route::middleware('throttle:api')->prefix('v1')->group(function (): void {
         Route::get('/companies/{company}/branches/{branch}/stock', [StockController::class, 'index']);
         Route::get('/companies/{company}/branches/{branch}/stock/movements', [StockController::class, 'movements']);
         Route::post('/companies/{company}/branches/{branch}/stock/movements', [StockController::class, 'store']);
+        Route::get('/companies/{company}/stock-transfers', [StockTransferController::class, 'index']);
+        Route::post('/companies/{company}/stock-transfers', [StockTransferController::class, 'store']);
+        Route::get('/companies/{company}/stock-transfers/{transfer}', [StockTransferController::class, 'show']);
+        Route::post('/companies/{company}/stock-transfers/{transfer}/submit', [StockTransferController::class, 'submit']);
+        Route::post('/companies/{company}/stock-transfers/{transfer}/approve', [StockTransferController::class, 'approve']);
+        Route::post('/companies/{company}/stock-transfers/{transfer}/ship', [StockTransferController::class, 'ship']);
+        Route::post('/companies/{company}/stock-transfers/{transfer}/receive', [StockTransferController::class, 'receive']);
+        Route::post('/companies/{company}/stock-transfers/{transfer}/cancel', [StockTransferController::class, 'cancel']);
     });
 });
 
