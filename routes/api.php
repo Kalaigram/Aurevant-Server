@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CompanyController;
 use App\Http\Controllers\Api\V1\ItemController;
+use App\Http\Controllers\Api\V1\StockController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -32,6 +33,9 @@ Route::middleware('throttle:api')->prefix('v1')->group(function (): void {
         Route::put('/companies/{company}/items/{item}', [ItemController::class, 'update']);
         Route::delete('/companies/{company}/items/{item}', [ItemController::class, 'destroy']);
         Route::put('/companies/{company}/items/{item}/prices/{branch}', [ItemController::class, 'setPrice']);
+        Route::get('/companies/{company}/branches/{branch}/stock', [StockController::class, 'index']);
+        Route::get('/companies/{company}/branches/{branch}/stock/movements', [StockController::class, 'movements']);
+        Route::post('/companies/{company}/branches/{branch}/stock/movements', [StockController::class, 'store']);
     });
 });
 
