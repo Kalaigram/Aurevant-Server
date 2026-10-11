@@ -9,6 +9,8 @@ use App\Domain\Catalog\Repositories\ItemRepositoryInterface;
 use App\Domain\Company\Repositories\CompanyRepositoryInterface;
 use App\Domain\Stock\Repositories\StockBalanceRepositoryInterface;
 use App\Domain\Stock\Repositories\StockMovementRepositoryInterface;
+use App\Domain\Stock\Repositories\StockOpnameRepositoryInterface;
+use App\Domain\Stock\Repositories\StockTransferRepositoryInterface;
 use App\Domain\User\Repositories\UserRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\BranchEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\CategoryEloquentRepository;
@@ -17,6 +19,8 @@ use App\Infrastructure\Persistence\Eloquent\ItemEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\ItemPriceEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\StockBalanceEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\StockMovementEloquentRepository;
+use App\Infrastructure\Persistence\Eloquent\StockOpnameEloquentRepository;
+use App\Infrastructure\Persistence\Eloquent\StockTransferEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\UserEloquentRepository;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -38,6 +42,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ItemPriceRepositoryInterface::class, ItemPriceEloquentRepository::class);
         $this->app->bind(StockBalanceRepositoryInterface::class, StockBalanceEloquentRepository::class);
         $this->app->bind(StockMovementRepositoryInterface::class, StockMovementEloquentRepository::class);
+        $this->app->bind(StockTransferRepositoryInterface::class, StockTransferEloquentRepository::class);
+        $this->app->bind(StockOpnameRepositoryInterface::class, StockOpnameEloquentRepository::class);
     }
 
     /**

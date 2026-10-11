@@ -12,11 +12,11 @@ use App\Domain\Stock\Exceptions\InsufficientStockException;
  */
 final class StockLedger
 {
-    public const TYPE_IN = ['pembelian'];
+    public const TYPE_IN = ['pembelian', 'transfer_masuk'];
 
-    public const TYPE_OUT = ['penjualan'];
+    public const TYPE_OUT = ['penjualan', 'transfer_keluar'];
 
-    public const TYPE_ADJUST = ['penyesuaian'];
+    public const TYPE_ADJUST = ['penyesuaian', 'opname'];
 
     public function apply(float $balance, float $avgCost, string $type, float $qty, ?float $unitCost = null): StockResult
     {

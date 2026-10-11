@@ -53,4 +53,35 @@ class StockLedgerTest extends TestCase
         $this->expectException(InsufficientStockException::class);
         $ledger->apply(95, 50000, 'penyesuaian', -96);
     }
+
+    public function test_transfer_keluar_seperti_penjualan(): void
+    {
+        $ledger = new StockLedger;
+
+        $hasil = $ledger->apply(100, 50000, 'transfer_keluar', 40);
+
+        $this->assertEquals(-40, $hasil->qtyDelta);
+        $this->assertEquals(60, $hasil->newBalance);
+        $this->assertEquals(2000000, $hasil->hppAmount);
+    }
+
+    public function test_transfer_masuk_membawa_harga_asal(): void
+    {
+        $ledger = new StockLedger;
+
+        $hasil = $ledger->apply(10, 40000, 'transfer_masuk', 40, 50000);
+
+        $this->assertEquals(50, $hasil->newBalance);
+        $this->assertEqualsWithDelta(48000, $hasil->newAvgCost, 0.01);
+    }
+
+    public function test_opname_seperti_penyesuaian(): void
+    {
+        $ledger = new StockLedger;
+
+        $hasil = $ledger->apply(100, 50000, 'opname', -3);
+
+        $this->assertEquals(-3, $hasil->qtyDelta);
+        $this->assertEquals(97, $hasil->newBalance);
+    }
 }
