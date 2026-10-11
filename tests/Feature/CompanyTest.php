@@ -15,7 +15,26 @@ class CompanyTest extends TestCase
 
     public function test_guest_ditolak_dengan_401(): void
     {
-        $this->getJson('/api/v1/companies')->assertUnauthorized();
+        $this->getJson('/api/v1/companies')
+            ->assertUnauthorized()
+            ->assertJson([
+                'status' => 'error',
+                'message' => 'Unauthenticated.',
+                'data' => null,
+            ]);
+    }
+
+    public function test_route_tidak_ada_mengikuti_kontrak_404(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user, 'sanctum')->getJson('/api/v1/tidak-ada')
+            ->assertNotFound()
+            ->assertJson([
+                'status' => 'error',
+                'message' => 'Tidak ditemukan.',
+                'data' => null,
+            ]);
     }
 
     public function test_daftar_company_mengikuti_kontrak_respons(): void
