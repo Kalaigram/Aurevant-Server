@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Domain\Company\Repositories\CompanyRepositoryInterface;
+use App\Domain\User\Repositories\UserRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\CompanyEloquentRepository;
+use App\Infrastructure\Persistence\Eloquent\UserEloquentRepository;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -17,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(CompanyRepositoryInterface::class, CompanyEloquentRepository::class);
+        $this->app->bind(UserRepositoryInterface::class, UserEloquentRepository::class);
     }
 
     /**
