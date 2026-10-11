@@ -22,7 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (AuthenticationException $e, Request $request) {
             if ($request->is('api/*')) {
-                return ApiResponse::error('Unauthenticated.', null, 401);
+                return ApiResponse::error($e->getMessage() ?: 'Unauthenticated.', null, 401);
             }
         });
 
