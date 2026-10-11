@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BranchController;
+use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CompanyController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +20,11 @@ Route::middleware('throttle:api')->prefix('v1')->group(function (): void {
         Route::get('/companies/{company}/branches/{branch}', [BranchController::class, 'show']);
         Route::put('/companies/{company}/branches/{branch}', [BranchController::class, 'update']);
         Route::delete('/companies/{company}/branches/{branch}', [BranchController::class, 'destroy']);
+        Route::get('/companies/{company}/categories', [CategoryController::class, 'index']);
+        Route::post('/companies/{company}/categories', [CategoryController::class, 'store']);
+        Route::get('/companies/{company}/categories/{category}', [CategoryController::class, 'show']);
+        Route::put('/companies/{company}/categories/{category}', [CategoryController::class, 'update']);
+        Route::delete('/companies/{company}/categories/{category}', [CategoryController::class, 'destroy']);
     });
 });
 
