@@ -3,10 +3,16 @@
 namespace App\Providers;
 
 use App\Domain\Branch\Repositories\BranchRepositoryInterface;
+use App\Domain\Catalog\Repositories\CategoryRepositoryInterface;
+use App\Domain\Catalog\Repositories\ItemPriceRepositoryInterface;
+use App\Domain\Catalog\Repositories\ItemRepositoryInterface;
 use App\Domain\Company\Repositories\CompanyRepositoryInterface;
 use App\Domain\User\Repositories\UserRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\BranchEloquentRepository;
+use App\Infrastructure\Persistence\Eloquent\CategoryEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\CompanyEloquentRepository;
+use App\Infrastructure\Persistence\Eloquent\ItemEloquentRepository;
+use App\Infrastructure\Persistence\Eloquent\ItemPriceEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\UserEloquentRepository;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -23,6 +29,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(CompanyRepositoryInterface::class, CompanyEloquentRepository::class);
         $this->app->bind(UserRepositoryInterface::class, UserEloquentRepository::class);
         $this->app->bind(BranchRepositoryInterface::class, BranchEloquentRepository::class);
+        $this->app->bind(CategoryRepositoryInterface::class, CategoryEloquentRepository::class);
+        $this->app->bind(ItemRepositoryInterface::class, ItemEloquentRepository::class);
+        $this->app->bind(ItemPriceRepositoryInterface::class, ItemPriceEloquentRepository::class);
     }
 
     /**
