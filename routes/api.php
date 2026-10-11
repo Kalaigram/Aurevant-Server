@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\CompanyController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -13,6 +14,11 @@ Route::middleware('throttle:api')->prefix('v1')->group(function (): void {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::get('/auth/me', [AuthController::class, 'me']);
         Route::get('/companies', [CompanyController::class, 'index']);
+        Route::get('/companies/{company}/branches', [BranchController::class, 'index']);
+        Route::post('/companies/{company}/branches', [BranchController::class, 'store']);
+        Route::get('/companies/{company}/branches/{branch}', [BranchController::class, 'show']);
+        Route::put('/companies/{company}/branches/{branch}', [BranchController::class, 'update']);
+        Route::delete('/companies/{company}/branches/{branch}', [BranchController::class, 'destroy']);
     });
 });
 

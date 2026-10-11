@@ -23,7 +23,9 @@ final class BranchEloquentRepository implements BranchRepositoryInterface
 
     public function createForCompany(Company $company, array $attributes): Branch
     {
-        return $company->branches()->create($attributes);
+        $branch = $company->branches()->create($attributes);
+
+        return $branch->refresh();
     }
 
     public function update(Branch $branch, array $attributes): Branch
