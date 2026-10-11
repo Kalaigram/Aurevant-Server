@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\ItemController;
 use App\Http\Controllers\Api\V1\StockController;
 use App\Http\Controllers\Api\V1\StockOpnameController;
 use App\Http\Controllers\Api\V1\StockTransferController;
+use App\Http\Controllers\Api\V1\SupplierController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -52,6 +53,11 @@ Route::middleware('throttle:api')->prefix('v1')->group(function (): void {
         Route::post('/companies/{company}/branches/{branch}/stock/opnames/{opname}/submit', [StockOpnameController::class, 'submit']);
         Route::post('/companies/{company}/branches/{branch}/stock/opnames/{opname}/approve', [StockOpnameController::class, 'approve']);
         Route::post('/companies/{company}/branches/{branch}/stock/opnames/{opname}/reject', [StockOpnameController::class, 'reject']);
+        Route::get('/companies/{company}/suppliers', [SupplierController::class, 'index']);
+        Route::post('/companies/{company}/suppliers', [SupplierController::class, 'store']);
+        Route::get('/companies/{company}/suppliers/{supplier}', [SupplierController::class, 'show']);
+        Route::put('/companies/{company}/suppliers/{supplier}', [SupplierController::class, 'update']);
+        Route::delete('/companies/{company}/suppliers/{supplier}', [SupplierController::class, 'destroy']);
     });
 });
 
