@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CompanyController;
+use App\Http\Controllers\Api\V1\ItemController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -25,6 +26,12 @@ Route::middleware('throttle:api')->prefix('v1')->group(function (): void {
         Route::get('/companies/{company}/categories/{category}', [CategoryController::class, 'show']);
         Route::put('/companies/{company}/categories/{category}', [CategoryController::class, 'update']);
         Route::delete('/companies/{company}/categories/{category}', [CategoryController::class, 'destroy']);
+        Route::get('/companies/{company}/items', [ItemController::class, 'index']);
+        Route::post('/companies/{company}/items', [ItemController::class, 'store']);
+        Route::get('/companies/{company}/items/{item}', [ItemController::class, 'show']);
+        Route::put('/companies/{company}/items/{item}', [ItemController::class, 'update']);
+        Route::delete('/companies/{company}/items/{item}', [ItemController::class, 'destroy']);
+        Route::put('/companies/{company}/items/{item}/prices/{branch}', [ItemController::class, 'setPrice']);
     });
 });
 
