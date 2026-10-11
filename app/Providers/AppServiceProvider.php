@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Domain\Company\Repositories\CompanyRepositoryInterface;
+use App\Infrastructure\Persistence\Eloquent\CompanyEloquentRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,7 +13,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(CompanyRepositoryInterface::class, CompanyEloquentRepository::class);
     }
 
     /**
