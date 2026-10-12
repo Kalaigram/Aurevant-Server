@@ -22,7 +22,19 @@ class Branch extends Model
         'address',
         'phone',
         'status',
+        'qr_secret',
+        'latitude',
+        'longitude',
+        'radius_m',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'latitude' => 'decimal:7',
+            'longitude' => 'decimal:7',
+        ];
+    }
 
     public function company(): BelongsTo
     {
