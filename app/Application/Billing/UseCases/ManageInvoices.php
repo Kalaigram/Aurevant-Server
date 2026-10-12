@@ -9,6 +9,7 @@ use App\Domain\Billing\Repositories\InvoiceRepositoryInterface;
 use App\Domain\Billing\Repositories\SubscriptionRepositoryInterface;
 use App\Models\Company;
 use App\Models\Plan;
+use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -71,5 +72,46 @@ final class ManageInvoices
 
             return InvoiceDTO::fromModel($invoice->refresh());
         });
+    }
+
+    /**
+     * Terbitkan tagihan untuk langganan aktif yang habis <= 7 hari.
+     * Lewati yang sudah punya tagihan menunggu atau tanpa paket.
+     */
+    public function generateDue(): int
+    {
+        $limit = now()->addDays(7)->toDateString();
+        $count = 0;
+
+        $subscriptions = Subscription::query()
+            ->with('plan')
+            ->whereIn('status', Subscription::ACTIVE)
+            ->whereNotNull('plan_id')
+            ->where(function ($query) use ($limit): void {
+                $query->whereDate('ends_at', '<=', $limit)
+                    ->orWhereNull('ends_at');
+            })
+            ->get();
+
+        foreach ($subscriptions as $subscription) {
+            $pending = SubscriptionInvoice::query()
+                ->where('company_id', $subscription->company_id)
+                ->where('status', 'menunggu')
+                ->exists();
+
+            if ($pending || $subscription->plan === null) {
+                continue;
+            }
+
+            $this->invoices->create($subscription->company, [
+                'plan_id' => $subscription->plan_id,
+                'amount' => (float) $subscription->plan->price,
+                'due_at' => $subscription->ends_at?->toDateString() ?? now()->addDays(7)->toDateString(),
+                'note' => 'Otomatis: masa aktif habis.',
+            ]);
+            $count++;
+        }
+
+        return $count;
     }
 }
