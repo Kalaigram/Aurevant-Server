@@ -133,26 +133,35 @@ final class DemoSeeder extends Seeder
     private function users(): array
     {
         $rows = [
-            'pemilik' => ['Bambang Wijaya', 'pemilik@demo.id', '0811000001', 'TK/0'],
-            'manajer' => ['Sari Puspita', 'manajer@demo.id', '0811000002', 'K/0'],
-            'kasir' => ['Budi Santoso', 'kasir@demo.id', '0811000003', 'TK/0'],
-            'kasir2' => ['Dewi Rahmawati', 'kasir2@demo.id', '0811000004', 'TK/1'],
-            'gudang' => ['Agus Setiawan', 'gudang@demo.id', '0811000005', 'K/1'],
-            'teknisi' => ['Rian Hidayat', 'teknisi@demo.id', '0811000006', 'TK/0'],
-            'hr' => ['Ratna Dewi', 'hr@demo.id', '0811000007', 'K/2'],
-            'keuangan' => ['Hendra Gunawan', 'keuangan@demo.id', '0811000008', 'K/0'],
+            ['Super Admin', 'superadmin@demo.id', null, null, true],
+            ['Bambang Wijaya', 'pemilik@demo.id', '0811000001', 'TK/0', false],
+            ['Sari Puspita', 'manajer@demo.id', '0811000002', 'K/0', false],
+            ['Budi Santoso', 'kasir@demo.id', '0811000003', 'TK/0', false],
+            ['Dewi Rahmawati', 'kasir2@demo.id', '0811000004', 'TK/1', false],
+            ['Agus Setiawan', 'gudang@demo.id', '0811000005', 'K/1', false],
+            ['Rian Hidayat', 'teknisi@demo.id', '0811000006', 'TK/0', false],
+            ['Ratna Dewi', 'hr@demo.id', '0811000007', 'K/2', false],
+            ['Hendra Gunawan', 'keuangan@demo.id', '0811000008', 'K/0', false],
         ];
 
+        $keys = ['super', 'pemilik', 'manajer', 'kasir', 'kasir2', 'gudang', 'teknisi', 'hr', 'keuangan'];
+
         $out = [];
-        $i = 1;
-        foreach ($rows as $key => [$name, $email, $phone, $ptkp]) {
-            $user = User::firstOrCreate(
-                ['email' => $email],
-                ['name' => $name, 'phone' => $phone, 'password' => Hash::make('password123'), 'ptkp_status' => $ptkp]
-            );
-            User::query()->whereKey($user->id)->update(['employee_uuid' => sprintf('EMP-%04d', $i++)]);
-            $out[$key] = $user->fresh();
+        foreach ($rows as $n => [$name, $email, $phone, $ptkp, $super]) {
+            $attrs = ['name' => $name, 'password' => Hash::make('password123'), 'is_super_admin' => $super];
+            if ($phone !== null) {
+                $attrs['phone'] = $phone;
+            }
+            if ($ptkp !== null) {
+                $attrs['ptkp_status'] = $ptkp;
+            }
+            $user = User::firstOrCreate(['email' => $email], $attrs);
+            User::query()->whereKey($user->id)->whereNull('employee_uuid')
+                ->update(['employee_uuid' => sprintf('EMP-%04d', $user->id)]);
+            $out[$keys[$n]] = $user->fresh();
         }
+
+        unset($out['super']);
 
         return $out;
     }
