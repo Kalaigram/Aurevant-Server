@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\PlanController;
 use App\Http\Controllers\Api\V1\PurchaseOrderController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\SaleController;
+use App\Http\Controllers\Api\V1\ScheduleController;
 use App\Http\Controllers\Api\V1\ServiceOrderController;
 use App\Http\Controllers\Api\V1\ShiftController;
 use App\Http\Controllers\Api\V1\StockController;
@@ -125,6 +126,20 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::get('/companies/{company}/reports/daily', [ReportController::class, 'daily'])->middleware('permission:keuangan.lihat');
         Route::get('/companies/{company}/reports/consolidation', [ReportController::class, 'consolidation'])->middleware('permission:laporan.konsolidasi');
         Route::post('/companies/{company}/reports/refresh', [ReportController::class, 'refresh'])->middleware('permission:laporan.konsolidasi');
+        Route::get('/companies/{company}/work-shifts', [ScheduleController::class, 'shifts']);
+        Route::post('/companies/{company}/work-shifts', [ScheduleController::class, 'storeShift'])->middleware('permission:shift.kelola');
+        Route::put('/companies/{company}/work-shifts/{shift}', [ScheduleController::class, 'updateShift'])->middleware('permission:shift.kelola');
+        Route::delete('/companies/{company}/work-shifts/{shift}', [ScheduleController::class, 'destroyShift'])->middleware('permission:shift.kelola');
+        Route::get('/companies/{company}/users/{user}/schedule-pattern', [ScheduleController::class, 'patterns'])->middleware('permission:jadwal.lihat');
+        Route::put('/companies/{company}/users/{user}/schedule-pattern', [ScheduleController::class, 'replacePatterns'])->middleware('permission:shift.kelola');
+        Route::post('/companies/{company}/users/{user}/schedule-overrides', [ScheduleController::class, 'upsertOverride'])->middleware('permission:shift.kelola');
+        Route::delete('/companies/{company}/users/{user}/schedule-overrides', [ScheduleController::class, 'deleteOverride'])->middleware('permission:shift.kelola');
+        Route::get('/companies/{company}/users/{user}/schedule', [ScheduleController::class, 'view'])->middleware('permission:jadwal.lihat');
+        Route::get('/companies/{company}/holidays', [ScheduleController::class, 'holidays']);
+        Route::post('/companies/{company}/holidays', [ScheduleController::class, 'storeHoliday'])->middleware('permission:pengaturan.kelola');
+        Route::delete('/companies/{company}/holidays/{holiday}', [ScheduleController::class, 'destroyHoliday'])->middleware('permission:pengaturan.kelola');
+        Route::post('/holidays', [ScheduleController::class, 'storeNationalHoliday'])->middleware('super.admin');
+        Route::delete('/holidays/{holiday}', [ScheduleController::class, 'destroyNationalHoliday'])->middleware('super.admin');
 
         Route::prefix('/companies/{company}/access')->group(function (): void {
             Route::get('/permissions', [AccessRoleController::class, 'permissions']);
