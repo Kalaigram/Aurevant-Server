@@ -31,6 +31,14 @@ final class CashShiftEloquentRepository implements CashShiftRepositoryInterface
             ->first();
     }
 
+    public function findForBranch(Branch $branch, int $id): ?CashShift
+    {
+        return CashShift::query()
+            ->where('branch_id', $branch->id)
+            ->whereKey($id)
+            ->first();
+    }
+
     public function save(CashShift $shift): CashShift
     {
         $shift->save();

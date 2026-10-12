@@ -13,5 +13,7 @@ interface CashShiftRepositoryInterface
 
     public function findOpenForBranch(Branch $branch): ?CashShift;
 
+    public function findForBranch(Branch $branch, int $id): ?CashShift;
+
     public function save(CashShift $shift): CashShift;
 }
