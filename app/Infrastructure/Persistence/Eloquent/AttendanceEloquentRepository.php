@@ -7,6 +7,7 @@ namespace App\Infrastructure\Persistence\Eloquent;
 use App\Domain\Attendance\Repositories\AttendanceRepositoryInterface;
 use App\Models\Attendance;
 use App\Models\Branch;
+use App\Models\Company;
 use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -19,6 +20,22 @@ final class AttendanceEloquentRepository implements AttendanceRepositoryInterfac
             ->where('branch_id', $branch->id)
             ->where('date', $date)
             ->first();
+    }
+
+    public function findForCompany(Company $company, int $id): ?Attendance
+    {
+        return Attendance::query()
+            ->where('company_id', $company->id)
+            ->whereKey($id)
+            ->first();
+    }
+
+    public function existsForDay(User $user, string $date): bool
+    {
+        return Attendance::query()
+            ->where('user_id', $user->id)
+            ->where('date', $date)
+            ->exists();
     }
 
     public function create(array $attributes): Attendance

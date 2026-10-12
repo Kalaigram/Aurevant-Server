@@ -154,4 +154,21 @@ final class ScheduleEloquentRepository implements ScheduleRepositoryInterface
             ->map(fn ($date) => $date->toDateString())
             ->all();
     }
+
+    public function scheduledUserIds(Company $company, string $from, string $to): array
+    {
+        $patternUsers = SchedulePattern::query()
+            ->where('company_id', $company->id)
+            ->distinct()
+            ->pluck('user_id')
+            ->all();
+        $overrideUsers = ScheduleOverride::query()
+            ->where('company_id', $company->id)
+            ->whereBetween('date', [$from, $to])
+            ->distinct()
+            ->pluck('user_id')
+            ->all();
+
+        return array_values(array_unique([...$patternUsers, ...$overrideUsers]));
+    }
 }

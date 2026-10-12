@@ -45,4 +45,7 @@ interface ScheduleRepositoryInterface
 
     /** @return list<string> tanggal Y-m-d libur (nasional + perusahaan) */
     public function holidayDates(?Company $company, string $from, string $to): array;
+
+    /** @return list<int> user yang punya pola atau roster di rentang */
+    public function scheduledUserIds(Company $company, string $from, string $to): array;
 }

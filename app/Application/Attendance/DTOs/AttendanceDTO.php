@@ -10,7 +10,7 @@ final readonly class AttendanceDTO
 {
     public function __construct(
         public int $id,
-        public int $branchId,
+        public ?int $branchId,
         public string $date,
         public string $status,
         public ?string $clockInAt,

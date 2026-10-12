@@ -25,6 +25,7 @@ class Attendance extends Model
         'clock_in_lng',
         'clock_in_selfie',
         'clock_in_device',
+        'note',
     ];
 
     protected function casts(): array

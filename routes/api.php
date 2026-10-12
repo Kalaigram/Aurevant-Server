@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\CompanyController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\ImportController;
 use App\Http\Controllers\Api\V1\ItemController;
+use App\Http\Controllers\Api\V1\LeaveController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PlanController;
 use App\Http\Controllers\Api\V1\PurchaseOrderController;
@@ -147,6 +148,12 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::delete('/companies/{company}/holidays/{holiday}', [ScheduleController::class, 'destroyHoliday'])->middleware('permission:pengaturan.kelola');
         Route::post('/holidays', [ScheduleController::class, 'storeNationalHoliday'])->middleware('super.admin');
         Route::delete('/holidays/{holiday}', [ScheduleController::class, 'destroyNationalHoliday'])->middleware('super.admin');
+        Route::get('/companies/{company}/leaves', [LeaveController::class, 'index']);
+        Route::post('/companies/{company}/users/{user}/leaves', [LeaveController::class, 'store']);
+        Route::post('/companies/{company}/leaves/{leave}/decide', [LeaveController::class, 'decide'])->middleware('permission:absensi.approve');
+        Route::put('/companies/{company}/attendances/{attendance}', [LeaveController::class, 'correct'])->middleware('permission:absensi.koreksi');
+        Route::get('/companies/{company}/users/{user}/card', [LeaveController::class, 'card']);
+        Route::get('/companies/{company}/users/{user}/card/qr', [LeaveController::class, 'cardQr']);
 
         Route::prefix('/companies/{company}/access')->group(function (): void {
             Route::get('/permissions', [AccessRoleController::class, 'permissions']);

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('attendances', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->date('date');
             $table->string('status')->default('hadir');
