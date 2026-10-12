@@ -15,6 +15,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\StockTransfer;
 use App\Shared\Responses\ApiResponse;
+use App\Support\Access;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -49,6 +50,7 @@ class StockTransferController extends Controller
 
         $from = $branches->findForCompany($company, (int) $validated['from_branch_id']) ?? abort(404);
         $to = $branches->findForCompany($company, (int) $validated['to_branch_id']) ?? abort(404);
+        Access::requireBranch($request->user(), $company, $from->id);
 
         return ApiResponse::success(
             $useCase($company, $from, $to, $validated['items'], $validated['note'] ?? null),
@@ -57,34 +59,46 @@ class StockTransferController extends Controller
         );
     }
 
-    public function show(Company $company, int $transfer, StockTransferRepositoryInterface $transfers): JsonResponse
+    public function show(Request $request, Company $company, int $transfer, StockTransferRepositoryInterface $transfers): JsonResponse
     {
+        $found = $this->scoped($company, $transfer, $transfers);
+        Access::requireBranches($request->user(), $company, [$found->from_branch_id, $found->to_branch_id], true);
+
         return ApiResponse::success(
-            StockTransferDTO::fromModel($this->scoped($company, $transfer, $transfers)),
+            StockTransferDTO::fromModel($found),
             'Detail transfer.'
         );
     }
 
-    public function submit(Company $company, int $transfer, StockTransferRepositoryInterface $transfers, TransitionTransfer $flow): JsonResponse
+    public function submit(Request $request, Company $company, int $transfer, StockTransferRepositoryInterface $transfers, TransitionTransfer $flow): JsonResponse
     {
+        $found = $this->scoped($company, $transfer, $transfers);
+        Access::requireBranch($request->user(), $company, $found->from_branch_id);
+
         return ApiResponse::success(
-            $flow->submit($this->scoped($company, $transfer, $transfers)),
+            $flow->submit($found),
             'Transfer diajukan.'
         );
     }
 
-    public function approve(Company $company, int $transfer, StockTransferRepositoryInterface $transfers, TransitionTransfer $flow): JsonResponse
+    public function approve(Request $request, Company $company, int $transfer, StockTransferRepositoryInterface $transfers, TransitionTransfer $flow): JsonResponse
     {
+        $found = $this->scoped($company, $transfer, $transfers);
+        Access::requireBranch($request->user(), $company, $found->from_branch_id);
+
         return ApiResponse::success(
-            $flow->approve($this->scoped($company, $transfer, $transfers)),
+            $flow->approve($found),
             'Transfer disetujui.'
         );
     }
 
-    public function ship(Company $company, int $transfer, StockTransferRepositoryInterface $transfers, ShipTransfer $useCase): JsonResponse
+    public function ship(Request $request, Company $company, int $transfer, StockTransferRepositoryInterface $transfers, ShipTransfer $useCase): JsonResponse
     {
+        $found = $this->scoped($company, $transfer, $transfers);
+        Access::requireBranch($request->user(), $company, $found->from_branch_id);
+
         return ApiResponse::success(
-            $useCase($this->scoped($company, $transfer, $transfers)),
+            $useCase($found),
             'Transfer dikirim, stok asal berkurang.'
         );
     }
@@ -97,16 +111,22 @@ class StockTransferController extends Controller
             'items.*.qty_received' => ['required', 'numeric', 'min:0'],
         ]);
 
+        $found = $this->scoped($company, $transfer, $transfers);
+        Access::requireBranch($request->user(), $company, $found->to_branch_id);
+
         return ApiResponse::success(
-            $useCase($this->scoped($company, $transfer, $transfers), $validated['items']),
+            $useCase($found, $validated['items']),
             'Transfer diterima, stok tujuan bertambah.'
         );
     }
 
-    public function cancel(Company $company, int $transfer, StockTransferRepositoryInterface $transfers, TransitionTransfer $flow): JsonResponse
+    public function cancel(Request $request, Company $company, int $transfer, StockTransferRepositoryInterface $transfers, TransitionTransfer $flow): JsonResponse
     {
+        $found = $this->scoped($company, $transfer, $transfers);
+        Access::requireBranch($request->user(), $company, $found->from_branch_id);
+
         return ApiResponse::success(
-            $flow->cancel($this->scoped($company, $transfer, $transfers)),
+            $flow->cancel($found),
             'Transfer dibatalkan.'
         );
     }

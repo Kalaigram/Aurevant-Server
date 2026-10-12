@@ -17,6 +17,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\PurchaseOrder;
 use App\Shared\Responses\ApiResponse;
+use App\Support\Access;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -63,34 +64,46 @@ class PurchaseOrderController extends Controller
         );
     }
 
-    public function show(Company $company, int $order, PurchaseOrderRepositoryInterface $orders): JsonResponse
+    public function show(Request $request, Company $company, int $order, PurchaseOrderRepositoryInterface $orders): JsonResponse
     {
+        $found = $this->scoped($company, $order, $orders);
+        Access::requireBranch($request->user(), $company, $found->branch_id);
+
         return ApiResponse::success(
-            PurchaseOrderDTO::fromModel($this->scoped($company, $order, $orders)),
+            PurchaseOrderDTO::fromModel($found),
             'Detail PO.'
         );
     }
 
-    public function submit(Company $company, int $order, PurchaseOrderRepositoryInterface $orders, TransitionPurchaseOrder $flow): JsonResponse
+    public function submit(Request $request, Company $company, int $order, PurchaseOrderRepositoryInterface $orders, TransitionPurchaseOrder $flow): JsonResponse
     {
+        $found = $this->scoped($company, $order, $orders);
+        Access::requireBranch($request->user(), $company, $found->branch_id);
+
         return ApiResponse::success(
-            $flow->submit($this->scoped($company, $order, $orders)),
+            $flow->submit($found),
             'PO diajukan.'
         );
     }
 
-    public function approve(Company $company, int $order, PurchaseOrderRepositoryInterface $orders, TransitionPurchaseOrder $flow): JsonResponse
+    public function approve(Request $request, Company $company, int $order, PurchaseOrderRepositoryInterface $orders, TransitionPurchaseOrder $flow): JsonResponse
     {
+        $found = $this->scoped($company, $order, $orders);
+        Access::requireBranch($request->user(), $company, $found->branch_id);
+
         return ApiResponse::success(
-            $flow->approve($this->scoped($company, $order, $orders)),
+            $flow->approve($found),
             'PO disetujui.'
         );
     }
 
-    public function order(Company $company, int $order, PurchaseOrderRepositoryInterface $orders, TransitionPurchaseOrder $flow): JsonResponse
+    public function order(Request $request, Company $company, int $order, PurchaseOrderRepositoryInterface $orders, TransitionPurchaseOrder $flow): JsonResponse
     {
+        $found = $this->scoped($company, $order, $orders);
+        Access::requireBranch($request->user(), $company, $found->branch_id);
+
         return ApiResponse::success(
-            $flow->order($this->scoped($company, $order, $orders)),
+            $flow->order($found),
             'PO dipesan ke supplier.'
         );
     }
@@ -106,9 +119,12 @@ class PurchaseOrderController extends Controller
             'note' => ['nullable', 'string', 'max:500'],
         ]);
 
+        $found = $this->scoped($company, $order, $orders);
+        Access::requireBranch($request->user(), $company, $found->branch_id);
+
         return ApiResponse::success(
             $useCase(
-                $this->scoped($company, $order, $orders),
+                $found,
                 $validated['items'],
                 $validated['due_at'] ?? null,
                 $validated['note'] ?? null,
@@ -117,10 +133,13 @@ class PurchaseOrderController extends Controller
         );
     }
 
-    public function cancel(Company $company, int $order, PurchaseOrderRepositoryInterface $orders, TransitionPurchaseOrder $flow): JsonResponse
+    public function cancel(Request $request, Company $company, int $order, PurchaseOrderRepositoryInterface $orders, TransitionPurchaseOrder $flow): JsonResponse
     {
+        $found = $this->scoped($company, $order, $orders);
+        Access::requireBranch($request->user(), $company, $found->branch_id);
+
         return ApiResponse::success(
-            $flow->cancel($this->scoped($company, $order, $orders)),
+            $flow->cancel($found),
             'PO dibatalkan.'
         );
     }
@@ -131,8 +150,11 @@ class PurchaseOrderController extends Controller
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ]);
 
+        $found = $this->scoped($company, $order, $orders);
+        Access::requireBranch($request->user(), $company, $found->branch_id);
+
         return ApiResponse::paginated(
-            $useCase($this->scoped($company, $order, $orders), (int) ($validated['per_page'] ?? 15)),
+            $useCase($found, (int) ($validated['per_page'] ?? 15)),
             'Daftar penerimaan.'
         );
     }

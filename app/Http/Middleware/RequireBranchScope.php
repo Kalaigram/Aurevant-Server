@@ -41,7 +41,7 @@ class RequireBranchScope
             $ids[] = (int) $routeBranch;
         }
 
-        foreach (['branch_id', 'from_branch_id', 'to_branch_id'] as $key) {
+        foreach (['branch_id'] as $key) {
             $value = $request->input($key);
 
             if (is_numeric($value)) {
