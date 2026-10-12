@@ -85,4 +85,12 @@ final class PayrollEloquentRepository implements PayrollRepositoryInterface
             ->get()
             ->all();
     }
+
+    public function grossForPeriod(PayrollPeriod $period): float
+    {
+        return (float) PayrollLine::query()
+            ->where('payroll_period_id', $period->id)
+            ->where('amount', '>', 0)
+            ->sum('amount');
+    }
 }

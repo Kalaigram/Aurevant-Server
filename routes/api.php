@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\ImportController;
 use App\Http\Controllers\Api\V1\ItemController;
 use App\Http\Controllers\Api\V1\LeaveController;
+use App\Http\Controllers\Api\V1\LedgerController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PayrollController;
 use App\Http\Controllers\Api\V1\PlanController;
@@ -135,6 +136,10 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::get('/companies/{company}/reports/daily', [ReportController::class, 'daily'])->middleware('permission:keuangan.lihat');
         Route::get('/companies/{company}/reports/consolidation', [ReportController::class, 'consolidation'])->middleware('permission:laporan.konsolidasi');
         Route::post('/companies/{company}/reports/refresh', [ReportController::class, 'refresh'])->middleware('permission:laporan.konsolidasi');
+        Route::get('/companies/{company}/journal-entries', [LedgerController::class, 'entries'])->middleware('permission:keuangan.lihat');
+        Route::get('/companies/{company}/reports/profit-loss', [LedgerController::class, 'profitLoss'])->middleware('permission:keuangan.lihat');
+        Route::get('/companies/{company}/reports/trial-balance', [LedgerController::class, 'trialBalance'])->middleware('permission:keuangan.lihat');
+        Route::get('/companies/{company}/salary-components', [PayrollController::class, 'components'])->middleware('permission:gaji.kelola');
         Route::get('/companies/{company}/salary-components', [PayrollController::class, 'components'])->middleware('permission:gaji.kelola');
         Route::post('/companies/{company}/salary-components', [PayrollController::class, 'storeComponent'])->middleware('permission:gaji.kelola');
         Route::put('/companies/{company}/salary-components/{component}', [PayrollController::class, 'updateComponent'])->middleware('permission:gaji.kelola');

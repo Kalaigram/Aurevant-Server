@@ -27,4 +27,6 @@ interface PayrollRepositoryInterface
 
     /** @return list<PayrollLine> */
     public function linesForUser(PayrollPeriod $period, User $user): array;
+
+    public function grossForPeriod(PayrollPeriod $period): float;
 }

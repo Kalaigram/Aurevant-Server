@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Purchase\UseCases;
 
 use App\Application\Audit\Audit;
+use App\Application\Ledger\LedgerPoster;
 use App\Application\Notify\Notifier;
 use App\Application\Purchase\DTOs\PurchaseOrderDTO;
 use App\Application\Stock\UseCases\RecordStockMovement;
@@ -22,6 +23,7 @@ final class ReceivePurchaseOrder
         private GoodsReceiptRepositoryInterface $receipts,
         private SupplierBillRepositoryInterface $bills,
         private RecordStockMovement $recordMovement,
+        private LedgerPoster $ledgerPoster,
     ) {}
 
     /**
@@ -86,7 +88,7 @@ final class ReceivePurchaseOrder
                 ]);
             }
 
-            $this->receipts->createWithItems($order, ['due_at' => $dueAt, 'note' => $note], $receiptRows);
+            $receipt = $this->receipts->createWithItems($order, ['due_at' => $dueAt, 'note' => $note], $receiptRows);
 
             $bill = $this->bills->findOrCreateForOrder($order->company, $order);
             $bill->amount = (float) $bill->amount + $billTotal;
@@ -112,6 +114,7 @@ final class ReceivePurchaseOrder
                 $order->company, ['po.setujui'], 'po.diterima',
                 'PO #'.$order->id.' ada penerimaan barang.', null, '/purchase-orders/'.$order->id, auth()->id(),
             );
+            ($this->ledgerPoster)->forReceipt($order, $receipt->id, $billTotal);
 
             return $dto;
         });

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Sale\UseCases;
 
 use App\Application\Audit\Audit;
+use App\Application\Ledger\LedgerPoster;
 use App\Application\Notify\Notifier;
 use App\Application\Report\UseCases\RebuildDailySummary;
 use App\Application\Sale\DTOs\SaleReturnDTO;
@@ -22,6 +23,7 @@ final class CreateReturn
         private SaleReturnRepositoryInterface $returns,
         private RecordStockMovement $recordMovement,
         private RebuildDailySummary $rebuildSummary,
+        private LedgerPoster $ledgerPoster,
     ) {}
 
     /**
@@ -131,6 +133,8 @@ final class CreateReturn
             foreach (array_unique([$sale->created_at->toDateString(), now()->toDateString()]) as $date) {
                 ($this->rebuildSummary)($branch, $date);
             }
+
+            ($this->ledgerPoster)->forReturn($sale, $retur);
 
             return SaleReturnDTO::fromModel($retur);
         });

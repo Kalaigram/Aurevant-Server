@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Sale\UseCases;
 
 use App\Application\Audit\Audit;
+use App\Application\Ledger\LedgerPoster;
 use App\Application\Notify\Notifier;
 use App\Application\Report\UseCases\RebuildDailySummary;
 use App\Application\Sale\DTOs\SaleReturnDTO;
@@ -24,6 +25,7 @@ final class VoidSale
         private SaleReturnRepositoryInterface $returns,
         private RecordStockMovement $recordMovement,
         private RebuildDailySummary $rebuildSummary,
+        private LedgerPoster $ledgerPoster,
     ) {}
 
     public function __invoke(Company $company, Branch $branch, Sale $sale, string $reason): SaleReturnDTO
@@ -70,17 +72,19 @@ final class VoidSale
                 ($this->rebuildSummary)($branch, $date);
             }
 
-            return SaleReturnDTO::fromModel(
-                $this->returns->createWithItems([
-                    'company_id' => $company->id,
-                    'sale_id' => $sale->id,
-                    'kind' => 'void',
-                    'reason' => $reason,
-                    'refund_method' => null,
-                    'refund_amount' => $sale->grand_total,
-                    'status' => 'disetujui',
-                ], [])
-            );
+            $retur = $this->returns->createWithItems([
+                'company_id' => $company->id,
+                'sale_id' => $sale->id,
+                'kind' => 'void',
+                'reason' => $reason,
+                'refund_method' => null,
+                'refund_amount' => $sale->grand_total,
+                'status' => 'disetujui',
+            ], []);
+
+            ($this->ledgerPoster)->forVoid($sale, $retur->id);
+
+            return SaleReturnDTO::fromModel($retur);
         });
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Sale\UseCases;
 
+use App\Application\Ledger\LedgerPoster;
 use App\Application\Report\UseCases\RebuildDailySummary;
 use App\Application\Sale\DTOs\SaleDTO;
 use App\Application\Stock\UseCases\RecordStockMovement;
@@ -30,6 +31,7 @@ final class CreateSale
         private ItemPriceRepositoryInterface $prices,
         private RecordStockMovement $recordMovement,
         private RebuildDailySummary $rebuildSummary,
+        private LedgerPoster $ledgerPoster,
     ) {}
 
     /**
@@ -92,6 +94,7 @@ final class CreateSale
             ], $computed['rows'], $this->paymentRows($payments));
 
             ($this->rebuildSummary)($branch, now()->toDateString());
+            ($this->ledgerPoster)->forSale($sale);
 
             return ['sale' => SaleDTO::fromModel($sale), 'duplicate' => false];
         });
