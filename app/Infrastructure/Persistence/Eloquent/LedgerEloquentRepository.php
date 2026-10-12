@@ -7,6 +7,7 @@ namespace App\Infrastructure\Persistence\Eloquent;
 use App\Domain\Ledger\Repositories\LedgerRepositoryInterface;
 use App\Domain\Ledger\Services\DefaultChartOfAccounts;
 use App\Models\Account;
+use App\Models\AccountingPeriod;
 use App\Models\Company;
 use App\Models\JournalEntry;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -47,6 +48,16 @@ final class LedgerEloquentRepository implements LedgerRepositoryInterface
             ->where('company_id', $company->id)
             ->where('source_type', $sourceType)
             ->where('source_id', $sourceId)
+            ->exists();
+    }
+
+    public function isPeriodClosed(Company $company, int $year, int $month): bool
+    {
+        return AccountingPeriod::query()
+            ->where('company_id', $company->id)
+            ->where('year', $year)
+            ->where('month', $month)
+            ->where('status', 'tutup')
             ->exists();
     }
 

@@ -23,7 +23,7 @@ final class RoleTemplates
             'Staf Gudang' => ['stok.transfer', 'stok.opname', 'po.buat', 'nota.lihat'],
             'Pelaksana Jasa' => ['nota.lihat', 'jadwal.lihat', 'gaji.lihat_sendiri'],
             'Admin Keuangan' => [
-                'keuangan.lihat', 'biaya.input', 'biaya.setujui', 'laporan.konsolidasi',
+                'keuangan.lihat', 'biaya.input', 'biaya.setujui', 'periode.tutup', 'laporan.konsolidasi',
                 'gaji.kelola', 'nota.lihat', 'dashboard.konsolidasi',
             ],
             'HR' => [

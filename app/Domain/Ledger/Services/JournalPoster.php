@@ -31,6 +31,8 @@ final class JournalPoster
             return;
         }
 
+        $this->assertPeriodOpen($company, $date);
+
         $debit = 0.0;
         $credit = 0.0;
         $resolved = [];
@@ -86,6 +88,25 @@ final class JournalPoster
             return;
         }
 
+        $this->assertPeriodOpen($company, $date);
+
         $this->ledger->createEntryRaw($company, $branchId, $date, $memo, $sourceType, $sourceId, $mirrored);
+    }
+
+    private function assertPeriodOpen(Company $company, string $date): void
+    {
+        $parsed = date_create_immutable($date);
+        if ($parsed === false) {
+            return;
+        }
+
+        $year = (int) $parsed->format('Y');
+        $month = (int) $parsed->format('n');
+
+        if ($this->ledger->isPeriodClosed($company, $year, $month)) {
+            throw ValidationException::withMessages([
+                'periode' => sprintf('Periode %04d-%02d sudah ditutup.', $year, $month),
+            ]);
+        }
     }
 }

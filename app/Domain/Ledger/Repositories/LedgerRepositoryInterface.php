@@ -20,6 +20,8 @@ interface LedgerRepositoryInterface
 
     public function existsForSource(Company $company, string $sourceType, int|string $sourceId): bool;
 
+    public function isPeriodClosed(Company $company, int $year, int $month): bool;
+
     public function findEntry(Company $company, string $sourceType, int|string $sourceId): ?JournalEntry;
 
     /** @param list<array{account_id: int, debit: float, credit: float}> $lines */
