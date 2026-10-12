@@ -214,6 +214,7 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
 
         Route::prefix('/companies/{company}/access')->group(function (): void {
             Route::get('/permissions', [AccessRoleController::class, 'permissions']);
+            Route::get('/my-permissions', [AccessRoleController::class, 'mine']);
             Route::get('/templates', [AccessRoleController::class, 'templates']);
             Route::get('/roles', [AccessRoleController::class, 'index']);
             Route::post('/roles', [AccessRoleController::class, 'store'])->middleware('permission:pengaturan.kelola');

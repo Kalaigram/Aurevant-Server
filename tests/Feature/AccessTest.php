@@ -36,6 +36,21 @@ class AccessTest extends TestCase
         return [$owner, $staff, $company, $other, $branch];
     }
 
+    public function test_izin_saya_perusahaan(): void
+    {
+        [$owner, $staff, $company] = $this->setupWorld();
+        $base = "/api/v1/companies/{$company->id}/access";
+
+        $this->getJson("{$base}/my-permissions")->assertUnauthorized();
+
+        $mine = $this->actingAs($owner, 'sanctum')->getJson("{$base}/my-permissions")->assertOk()->json('data');
+        $this->assertContains('transaksi.void', $mine['permissions']);
+        $this->assertContains('jasa.proses', $mine['permissions']);
+
+        $staffMine = $this->actingAs($staff, 'sanctum')->getJson("{$base}/my-permissions")->assertOk()->json('data');
+        $this->assertSame([], $staffMine['permissions']);
+    }
+
     public function test_katalog_dan_role_dari_template(): void
     {
         [$owner, $staff, $company] = $this->setupWorld();

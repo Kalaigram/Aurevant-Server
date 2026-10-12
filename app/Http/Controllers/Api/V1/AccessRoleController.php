@@ -34,6 +34,25 @@ class AccessRoleController extends Controller
         return ApiResponse::success(array_keys(RoleTemplates::all()), 'Template role.');
     }
 
+    public function mine(Request $request, Company $company): JsonResponse
+    {
+        $user = $request->user();
+        $names = [];
+
+        foreach (PermissionCatalog::all() as $name) {
+            setPermissionsTeamId($company->id);
+
+            if ($user->hasPermissionTo($name)) {
+                $names[] = $name;
+            }
+        }
+
+        return ApiResponse::success(
+            ['permissions' => $names],
+            'Izin saya di perusahaan ini.'
+        );
+    }
+
     public function index(Request $request, Company $company, ListRoles $useCase): JsonResponse
     {
         $validated = $request->validate([
