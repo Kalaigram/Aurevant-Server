@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Sale\UseCases;
 
 use App\Application\Audit\Audit;
+use App\Application\Report\UseCases\RebuildDailySummary;
 use App\Application\Sale\DTOs\SaleReturnDTO;
 use App\Application\Stock\UseCases\RecordStockMovement;
 use App\Domain\Sale\Repositories\SaleRepositoryInterface;
@@ -21,6 +22,7 @@ final class VoidSale
         private SaleRepositoryInterface $sales,
         private SaleReturnRepositoryInterface $returns,
         private RecordStockMovement $recordMovement,
+        private RebuildDailySummary $rebuildSummary,
     ) {}
 
     public function __invoke(Company $company, Branch $branch, Sale $sale, string $reason): SaleReturnDTO
@@ -58,6 +60,10 @@ final class VoidSale
                 ['status' => 'lunas'],
                 ['status' => 'void', 'reason' => $reason],
             );
+
+            foreach (array_unique([$sale->created_at->toDateString(), now()->toDateString()]) as $date) {
+                ($this->rebuildSummary)($branch, $date);
+            }
 
             return SaleReturnDTO::fromModel(
                 $this->returns->createWithItems([

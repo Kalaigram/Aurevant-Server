@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Sale\UseCases;
 
+use App\Application\Report\UseCases\RebuildDailySummary;
 use App\Application\Sale\DTOs\SaleDTO;
 use App\Application\Stock\UseCases\RecordStockMovement;
 use App\Domain\Catalog\Repositories\ItemPriceRepositoryInterface;
@@ -28,6 +29,7 @@ final class CreateSale
         private ItemRepositoryInterface $items,
         private ItemPriceRepositoryInterface $prices,
         private RecordStockMovement $recordMovement,
+        private RebuildDailySummary $rebuildSummary,
     ) {}
 
     /**
@@ -88,6 +90,8 @@ final class CreateSale
                 'tax_total' => $computed['taxTotal'],
                 'grand_total' => $computed['grandTotal'],
             ], $computed['rows'], $this->paymentRows($payments));
+
+            ($this->rebuildSummary)($branch, now()->toDateString());
 
             return ['sale' => SaleDTO::fromModel($sale), 'duplicate' => false];
         });

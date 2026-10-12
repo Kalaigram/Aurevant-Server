@@ -13,7 +13,7 @@ final class SalesAggregateEloquentRepository implements SalesAggregateRepository
     {
         $sales = DB::table('sales')
             ->where('branch_id', $branchId)
-            ->where('status', 'lunas')
+            ->whereIn('status', ['lunas', 'retur'])
             ->whereDate('created_at', $date)
             ->selectRaw('COALESCE(SUM(grand_total), 0) AS omzet, COUNT(*) AS transactions, COALESCE(SUM(discount_total), 0) AS discount, COALESCE(SUM(tax_total), 0) AS tax')
             ->first();
@@ -21,14 +21,14 @@ final class SalesAggregateEloquentRepository implements SalesAggregateRepository
         $hpp = DB::table('sales_items')
             ->join('sales', 'sales.id', '=', 'sales_items.sale_id')
             ->where('sales.branch_id', $branchId)
-            ->where('sales.status', 'lunas')
+            ->whereIn('sales.status', ['lunas', 'retur'])
             ->whereDate('sales.created_at', $date)
             ->sum('sales_items.hpp_amount');
 
         $cash = DB::table('sale_payments')
             ->join('sales', 'sales.id', '=', 'sale_payments.sale_id')
             ->where('sales.branch_id', $branchId)
-            ->where('sales.status', 'lunas')
+            ->whereIn('sales.status', ['lunas', 'retur'])
             ->where('sale_payments.method', 'tunai')
             ->whereDate('sales.created_at', $date)
             ->sum('sale_payments.amount');

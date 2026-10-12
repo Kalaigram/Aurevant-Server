@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\CompanyController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\ItemController;
 use App\Http\Controllers\Api\V1\PurchaseOrderController;
+use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\SaleController;
 use App\Http\Controllers\Api\V1\ServiceOrderController;
 use App\Http\Controllers\Api\V1\ShiftController;
@@ -98,6 +99,9 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/pay', [ServiceOrderController::class, 'pay'])->middleware('permission:transaksi.buat');
         Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/cancel', [ServiceOrderController::class, 'cancel'])->middleware('permission:transaksi.buat');
         Route::get('/companies/{company}/audit-logs', [AuditLogController::class, 'index'])->middleware('permission:audit.lihat');
+        Route::get('/companies/{company}/reports/daily', [ReportController::class, 'daily'])->middleware('permission:keuangan.lihat');
+        Route::get('/companies/{company}/reports/consolidation', [ReportController::class, 'consolidation'])->middleware('permission:laporan.konsolidasi');
+        Route::post('/companies/{company}/reports/refresh', [ReportController::class, 'refresh'])->middleware('permission:laporan.konsolidasi');
 
         Route::prefix('/companies/{company}/access')->group(function (): void {
             Route::get('/permissions', [AccessRoleController::class, 'permissions']);

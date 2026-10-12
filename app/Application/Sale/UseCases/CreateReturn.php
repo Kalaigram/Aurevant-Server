@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Sale\UseCases;
 
 use App\Application\Audit\Audit;
+use App\Application\Report\UseCases\RebuildDailySummary;
 use App\Application\Sale\DTOs\SaleReturnDTO;
 use App\Application\Stock\UseCases\RecordStockMovement;
 use App\Domain\Sale\Repositories\SaleReturnRepositoryInterface;
@@ -19,6 +20,7 @@ final class CreateReturn
     public function __construct(
         private SaleReturnRepositoryInterface $returns,
         private RecordStockMovement $recordMovement,
+        private RebuildDailySummary $rebuildSummary,
     ) {}
 
     /**
@@ -120,6 +122,10 @@ final class CreateReturn
                 ['status' => 'lunas'],
                 ['status' => $sale->status, 'reason' => $reason, 'refund_method' => $refundMethod],
             );
+
+            foreach (array_unique([$sale->created_at->toDateString(), now()->toDateString()]) as $date) {
+                ($this->rebuildSummary)($branch, $date);
+            }
 
             return SaleReturnDTO::fromModel($retur);
         });
