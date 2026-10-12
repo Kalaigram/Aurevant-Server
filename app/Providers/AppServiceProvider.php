@@ -16,6 +16,8 @@ use App\Domain\Purchase\Repositories\GoodsReceiptRepositoryInterface;
 use App\Domain\Purchase\Repositories\PurchaseOrderRepositoryInterface;
 use App\Domain\Purchase\Repositories\SupplierBillRepositoryInterface;
 use App\Domain\Purchase\Repositories\SupplierRepositoryInterface;
+use App\Domain\Report\Repositories\SalesAggregateRepositoryInterface;
+use App\Domain\Report\Repositories\SummaryRepositoryInterface;
 use App\Domain\Sale\Repositories\CashShiftRepositoryInterface;
 use App\Domain\Sale\Repositories\SaleRepositoryInterface;
 use App\Domain\Sale\Repositories\SaleReturnRepositoryInterface;
@@ -41,12 +43,14 @@ use App\Infrastructure\Persistence\Eloquent\PurchaseOrderEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\RoleEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\SaleEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\SaleReturnEloquentRepository;
+use App\Infrastructure\Persistence\Eloquent\SalesAggregateEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\SaleSequenceEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\ServiceOrderEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\StockBalanceEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\StockMovementEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\StockOpnameEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\StockTransferEloquentRepository;
+use App\Infrastructure\Persistence\Eloquent\SummaryEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\SupplierBillEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\SupplierEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\UserEloquentRepository;
@@ -86,6 +90,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(CustomerRepositoryInterface::class, CustomerEloquentRepository::class);
         $this->app->bind(ServiceOrderRepositoryInterface::class, ServiceOrderEloquentRepository::class);
         $this->app->bind(AuditLogRepositoryInterface::class, AuditLogEloquentRepository::class);
+        $this->app->bind(SalesAggregateRepositoryInterface::class, SalesAggregateEloquentRepository::class);
+        $this->app->bind(SummaryRepositoryInterface::class, SummaryEloquentRepository::class);
     }
 
     /**
