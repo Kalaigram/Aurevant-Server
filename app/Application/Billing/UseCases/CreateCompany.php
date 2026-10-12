@@ -14,6 +14,7 @@ use App\Domain\Access\Services\PermissionCatalog;
 use App\Domain\Access\Services\RoleTemplates;
 use App\Domain\Billing\Repositories\SubscriptionRepositoryInterface;
 use App\Domain\Branch\Repositories\BranchRepositoryInterface;
+use App\Domain\Ledger\Repositories\LedgerRepositoryInterface;
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +28,7 @@ final class CreateCompany
         private RoleRepositoryInterface $roles,
         private AssignmentRepositoryInterface $assignments,
         private SubscriptionRepositoryInterface $billing,
+        private LedgerRepositoryInterface $ledger,
     ) {}
 
     /** @return array{company: CompanyDTO, branch: BranchDTO, role: RoleDTO, subscription: SubscriptionDTO} */
@@ -48,6 +50,8 @@ final class CreateCompany
             $company = Company::query()->create([
                 'name' => $name, 'slug' => $slug, 'status' => 'aktif',
             ]);
+
+            $this->ledger->ensureDefaultAccounts($company);
 
             setPermissionsTeamId($company->id);
             foreach (PermissionCatalog::all() as $permission) {
