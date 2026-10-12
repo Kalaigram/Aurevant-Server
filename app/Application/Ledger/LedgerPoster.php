@@ -7,10 +7,14 @@ namespace App\Application\Ledger;
 use App\Domain\Ledger\Repositories\LedgerRepositoryInterface;
 use App\Domain\Ledger\Services\DefaultChartOfAccounts;
 use App\Domain\Ledger\Services\JournalPoster;
+use App\Models\Company;
+use App\Models\Expense;
 use App\Models\PayrollPeriod;
 use App\Models\PurchaseOrder;
+use App\Models\Receivable;
 use App\Models\Sale;
 use App\Models\SaleReturn;
+use App\Models\SupplierBill;
 
 /** Aturan posting tiap dokumen. Idempoten per sumber. */
 final class LedgerPoster
@@ -163,6 +167,60 @@ final class LedgerPoster
             [
                 ['account' => '2140', 'debit' => round($gross, 2)],
                 ['account' => '1110', 'credit' => round($gross, 2)],
+            ]
+        );
+    }
+
+    public function forExpense(Company $company, Expense $expense): void
+    {
+        $this->ledger->ensureDefaultAccounts($company);
+        $codes = DefaultChartOfAccounts::paymentAccounts();
+        $this->poster->post(
+            $company, $expense->branch_id, (string) $expense->date->toDateString(), 'Biaya: '.$expense->description,
+            'expense', $expense->id,
+            [
+                ['account' => '6200', 'debit' => (float) $expense->amount],
+                ['account' => $codes[$expense->method] ?? '1110', 'credit' => (float) $expense->amount],
+            ]
+        );
+    }
+
+    public function forBillPayment(Company $company, SupplierBill $bill, string $method, float $amount, int $paymentId): void
+    {
+        $this->ledger->ensureDefaultAccounts($company);
+        $codes = DefaultChartOfAccounts::paymentAccounts();
+        $this->poster->post(
+            $company, $bill->order->branch_id, now()->toDateString(), 'Bayar hutang PO #'.$bill->purchase_order_id,
+            'bill_payment', $paymentId,
+            [
+                ['account' => '2110', 'debit' => round($amount, 2)],
+                ['account' => $codes[$method] ?? '1110', 'credit' => round($amount, 2)],
+            ]
+        );
+    }
+
+    public function forReceivable(Company $company, Receivable $receivable): void
+    {
+        $this->ledger->ensureDefaultAccounts($company);
+        $this->poster->post(
+            $company, $receivable->branch_id, now()->toDateString(), 'Piutang #'.$receivable->id,
+            'receivable', $receivable->id,
+            [
+                ['account' => '1210', 'debit' => (float) $receivable->amount],
+                ['account' => '4100', 'credit' => (float) $receivable->amount],
+            ]
+        );
+    }
+
+    public function forReceivablePayment(Company $company, Receivable $receivable, string $method, float $amount, int $paymentId): void
+    {
+        $codes = DefaultChartOfAccounts::paymentAccounts();
+        $this->poster->post(
+            $company, $receivable->branch_id, now()->toDateString(), 'Terima piutang #'.$receivable->id,
+            'receivable_payment', $paymentId,
+            [
+                ['account' => $codes[$method] ?? '1110', 'debit' => round($amount, 2)],
+                ['account' => '1210', 'credit' => round($amount, 2)],
             ]
         );
     }
