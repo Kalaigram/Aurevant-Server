@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Application\Sale\DTOs\SaleDTO;
+use App\Application\Sale\DTOs\SaleReturnDTO;
+use App\Application\Sale\UseCases\CreateReturn;
 use App\Application\Sale\UseCases\CreateSale;
+use App\Application\Sale\UseCases\VoidSale;
 use App\Domain\Branch\Repositories\BranchRepositoryInterface;
 use App\Domain\Sale\Repositories\SaleRepositoryInterface;
+use App\Domain\Sale\Repositories\SaleReturnRepositoryInterface;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\Company;
@@ -74,6 +78,59 @@ class SaleController extends Controller
         $found = $sales->findForBranch($scopedBranch, $sale) ?? abort(404);
 
         return ApiResponse::success(SaleDTO::fromModel($found), 'Detail nota.');
+    }
+
+    public function void(Request $request, Company $company, int $branch, int $sale, BranchRepositoryInterface $branches, SaleRepositoryInterface $sales, VoidSale $useCase): JsonResponse
+    {
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        $scopedBranch = $this->scopedBranch($company, $branch, $branches);
+        $found = $sales->findForBranch($scopedBranch, $sale) ?? abort(404);
+
+        return ApiResponse::success(
+            $useCase($company, $scopedBranch, $found, $validated['reason']),
+            'Nota divoid, stok dikembalikan.'
+        );
+    }
+
+    public function returns(Request $request, Company $company, int $branch, BranchRepositoryInterface $branches, SaleReturnRepositoryInterface $returns): JsonResponse
+    {
+        $validated = $request->validate([
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        $paginator = $returns->paginateForBranch(
+            $this->scopedBranch($company, $branch, $branches),
+            (int) ($validated['per_page'] ?? 15)
+        );
+
+        return ApiResponse::paginated(
+            $paginator->through(fn ($retur) => SaleReturnDTO::fromModel($retur)),
+            'Daftar void/retur.'
+        );
+    }
+
+    public function storeReturn(Request $request, Company $company, int $branch, int $sale, BranchRepositoryInterface $branches, SaleRepositoryInterface $sales, CreateReturn $useCase): JsonResponse
+    {
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'max:500'],
+            'refund_method' => ['required', 'string', Rule::in(['tunai', 'transfer', 'qris', 'ewallet'])],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.sale_item_id' => ['required', 'integer'],
+            'items.*.qty' => ['required', 'numeric', 'gt:0'],
+            'items.*.condition' => ['required', 'string', Rule::in(['layak', 'rusak'])],
+        ]);
+
+        $scopedBranch = $this->scopedBranch($company, $branch, $branches);
+        $found = $sales->findForBranch($scopedBranch, $sale) ?? abort(404);
+
+        return ApiResponse::success(
+            $useCase($company, $scopedBranch, $found, $validated['items'], $validated['reason'], $validated['refund_method']),
+            'Retur dicatat.',
+            201
+        );
     }
 
     private function scopedBranch(Company $company, int $id, BranchRepositoryInterface $branches): Branch

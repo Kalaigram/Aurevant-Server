@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('sales_return_items', function (Blueprint $table) {
+        Schema::create('sale_return_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('sales_return_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('sales_return_id')->constrained('sale_returns')->cascadeOnDelete();
             $table->foreignId('sale_item_id')->constrained('sales_items')->cascadeOnDelete();
             $table->foreignId('item_id')->constrained()->cascadeOnDelete();
             $table->decimal('qty', 15, 3);
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('sales_return_items');
+        Schema::dropIfExists('sale_return_items');
     }
 };

@@ -76,6 +76,9 @@ Route::middleware('throttle:api')->prefix('v1')->group(function (): void {
         Route::get('/companies/{company}/branches/{branch}/sales', [SaleController::class, 'index']);
         Route::post('/companies/{company}/branches/{branch}/sales', [SaleController::class, 'store']);
         Route::get('/companies/{company}/branches/{branch}/sales/{sale}', [SaleController::class, 'show']);
+        Route::post('/companies/{company}/branches/{branch}/sales/{sale}/void', [SaleController::class, 'void']);
+        Route::get('/companies/{company}/branches/{branch}/returns', [SaleController::class, 'returns']);
+        Route::post('/companies/{company}/branches/{branch}/sales/{sale}/returns', [SaleController::class, 'storeReturn']);
     });
 });
 
