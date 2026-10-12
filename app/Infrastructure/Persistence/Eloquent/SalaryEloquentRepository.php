@@ -70,6 +70,8 @@ final class SalaryEloquentRepository implements SalaryRepositoryInterface
                 'name' => $row->component->name,
                 'calc_type' => $row->component->calc_type,
                 'deductible' => (bool) $row->component->deductible,
+                'taxable' => (bool) $row->component->taxable,
+                'bpjs_base' => (bool) $row->component->bpjs_base,
                 'amount' => (float) $row->amount,
             ])
             ->all();

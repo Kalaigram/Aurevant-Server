@@ -8,7 +8,7 @@ namespace App\Domain\Payroll\Services;
 final class SalaryCalculator
 {
     /**
-     * @param  list<array{name: string, calc_type: string, deductible: bool, amount: float}>  $components
+     * @param  list<array{name: string, calc_type: string, deductible: bool, amount: float, taxable?: bool, bpjs_base?: bool}>  $components
      * @return list<array{label: string, amount: float, component_id: int|null}>
      */
     public function calculate(
@@ -19,24 +19,68 @@ final class SalaryCalculator
         float $commissionTotal,
     ): array {
         $lines = [];
+        $bpjsBase = 0.0;
+        $taxBase = 0.0;
+        $hasTaxable = false;
 
         foreach ($components as $component) {
+            $earned = match ($component['calc_type']) {
+                'monthly_fixed' => (float) $component['amount'],
+                'daily_rate' => round((float) $component['amount'] * $presentDays, 2),
+                'commission' => round($commissionTotal, 2),
+                default => 0.0,
+            };
+
+            if (($component['bpjs_base'] ?? false) && $earned > 0) {
+                $bpjsBase = round($bpjsBase + $earned, 2);
+            }
+
+            if ($component['taxable'] ?? false) {
+                $hasTaxable = true;
+                if ($earned > 0) {
+                    $taxBase = round($taxBase + $earned, 2);
+                }
+            }
+
             $built = match ($component['calc_type']) {
                 'monthly_fixed' => $this->monthlyFixed($component, $absentDeductibleDays, $divisor),
                 'daily_rate' => [[
                     'label' => $component['name'],
-                    'amount' => round($component['amount'] * $presentDays, 2),
+                    'amount' => $earned,
                     'component_id' => $component['id'] ?? null,
                 ]],
                 'commission' => [[
                     'label' => $component['name'],
-                    'amount' => round($commissionTotal, 2),
+                    'amount' => $earned,
                     'component_id' => $component['id'] ?? null,
                 ]],
                 default => [],
             };
 
             array_push($lines, ...$built);
+        }
+
+        // Iuran karyawan: 1% Kes + 2% JHT + 1% JP dari komponen bertanda bpjs_base.
+        $bpjs = 0.0;
+        if ($bpjsBase > 0) {
+            $bpjs = round($bpjsBase * 0.04, 2);
+            $lines[] = [
+                'label' => 'BPJS karyawan (1% Kes + 2% JHT + 1% JP)',
+                'amount' => -$bpjs,
+                'component_id' => null,
+            ];
+        }
+
+        // PPh 21 sederhana: 5% dari (dasar kena pajak - BPJS). Annualisasi + PTKP menyusul.
+        if ($hasTaxable) {
+            $pph = round(max(0.0, $taxBase - $bpjs) * 0.05, 2);
+            if ($pph > 0) {
+                $lines[] = [
+                    'label' => 'PPh 21 (5% sederhana)',
+                    'amount' => -$pph,
+                    'component_id' => null,
+                ];
+            }
         }
 
         return $lines;

@@ -28,6 +28,7 @@ use App\Http\Controllers\Api\V1\StockController;
 use App\Http\Controllers\Api\V1\StockOpnameController;
 use App\Http\Controllers\Api\V1\StockTransferController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
+use App\Http\Controllers\Api\V1\SubscriptionInvoiceController;
 use App\Http\Controllers\Api\V1\SupplierController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -135,6 +136,10 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::delete('/plans/{plan}', [PlanController::class, 'destroy'])->middleware('super.admin');
         Route::get('/companies/{company}/subscription', [SubscriptionController::class, 'show']);
         Route::put('/companies/{company}/subscription', [SubscriptionController::class, 'update'])->middleware('super.admin');
+        Route::get('/companies/{company}/subscription-invoices', [SubscriptionInvoiceController::class, 'index']);
+        Route::post('/companies/{company}/subscription-invoices', [SubscriptionInvoiceController::class, 'store'])->middleware('super.admin');
+        Route::get('/companies/{company}/subscription-invoices/{invoice}', [SubscriptionInvoiceController::class, 'show']);
+        Route::post('/companies/{company}/subscription-invoices/{invoice}/pay', [SubscriptionInvoiceController::class, 'pay'])->middleware('super.admin');
         Route::get('/companies/{company}/reports/daily', [ReportController::class, 'daily'])->middleware('permission:keuangan.lihat');
         Route::get('/companies/{company}/reports/consolidation', [ReportController::class, 'consolidation'])->middleware('permission:laporan.konsolidasi');
         Route::post('/companies/{company}/reports/refresh', [ReportController::class, 'refresh'])->middleware('permission:laporan.konsolidasi');

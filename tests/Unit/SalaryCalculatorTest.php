@@ -58,4 +58,31 @@ class SalaryCalculatorTest extends TestCase
         $this->assertCount(2, $lines);
         $this->assertEquals(350000.0, $lines[1]['amount']);
     }
+
+    public function test_bpjs_dan_pph21_dari_flag_komponen(): void
+    {
+        $calc = new SalaryCalculator;
+
+        $lines = $calc->calculate(
+            [
+                ['id' => 1, 'name' => 'Gaji pokok', 'calc_type' => 'monthly_fixed', 'deductible' => true, 'amount' => 5000000, 'taxable' => true, 'bpjs_base' => true],
+                ['id' => 2, 'name' => 'Tunjangan', 'calc_type' => 'monthly_fixed', 'deductible' => false, 'amount' => 1000000, 'taxable' => true, 'bpjs_base' => false],
+            ],
+            25,
+            0,
+            25,
+            0.0,
+        );
+
+        $byLabel = [];
+        foreach ($lines as $line) {
+            $byLabel[$line['label']] = $line['amount'];
+        }
+
+        // BPJS = 4% x 5.000.000 = 200.000
+        $this->assertEquals(-200000.0, $byLabel['BPJS karyawan (1% Kes + 2% JHT + 1% JP)']);
+        // PPh = 5% x (6.000.000 - 200.000) = 290.000
+        $this->assertEquals(-290000.0, $byLabel['PPh 21 (5% sederhana)']);
+        $this->assertEquals(5000000 + 1000000 - 200000 - 290000, array_sum(array_column($lines, 'amount')));
+    }
 }
