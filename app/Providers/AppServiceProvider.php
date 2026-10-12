@@ -7,6 +7,7 @@ use App\Domain\Access\Repositories\AssignmentRepositoryInterface;
 use App\Domain\Access\Repositories\RoleRepositoryInterface;
 use App\Domain\Audit\Events\AuditTrail;
 use App\Domain\Audit\Repositories\AuditLogRepositoryInterface;
+use App\Domain\Billing\Repositories\SubscriptionRepositoryInterface;
 use App\Domain\Branch\Repositories\BranchRepositoryInterface;
 use App\Domain\Catalog\Repositories\CategoryRepositoryInterface;
 use App\Domain\Catalog\Repositories\ItemPriceRepositoryInterface;
@@ -50,6 +51,7 @@ use App\Infrastructure\Persistence\Eloquent\StockBalanceEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\StockMovementEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\StockOpnameEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\StockTransferEloquentRepository;
+use App\Infrastructure\Persistence\Eloquent\SubscriptionEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\SummaryEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\SupplierBillEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\SupplierEloquentRepository;
@@ -90,6 +92,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(CustomerRepositoryInterface::class, CustomerEloquentRepository::class);
         $this->app->bind(ServiceOrderRepositoryInterface::class, ServiceOrderEloquentRepository::class);
         $this->app->bind(AuditLogRepositoryInterface::class, AuditLogEloquentRepository::class);
+        $this->app->bind(SubscriptionRepositoryInterface::class, SubscriptionEloquentRepository::class);
         $this->app->bind(SalesAggregateRepositoryInterface::class, SalesAggregateEloquentRepository::class);
         $this->app->bind(SummaryRepositoryInterface::class, SummaryEloquentRepository::class);
     }

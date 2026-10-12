@@ -6,12 +6,13 @@ namespace Tests\Concerns;
 
 use App\Domain\Access\Services\PermissionCatalog;
 use App\Domain\Access\Services\RoleTemplates;
+use App\Domain\Billing\Repositories\SubscriptionRepositoryInterface;
 use App\Models\Company;
 use App\Models\User;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
-/** Beri user satu role berisi SEMUA permission katalog di company ini. */
+/** Beri user satu role berisi SEMUA permission katalog + trial aktif di company ini. */
 trait WithPermissions
 {
     protected function owner(User $user, Company $company): User
@@ -27,6 +28,8 @@ trait WithPermissions
         );
         $role->syncPermissions(RoleTemplates::permissionsFor('Pemilik', PermissionCatalog::all()));
         $user->assignRole($role);
+
+        app(SubscriptionRepositoryInterface::class)->startTrial($company);
 
         return $user->fresh();
     }

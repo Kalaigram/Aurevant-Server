@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Domain\Billing\Repositories\SubscriptionRepositoryInterface;
 use App\Models\Branch;
 use App\Models\Company;
 use App\Models\User;
@@ -19,6 +20,7 @@ class ForbiddenTest extends TestCase
     {
         $user = User::factory()->create();
         $company = Company::create(['name' => 'PT A', 'slug' => 'pt-a', 'status' => 'aktif']);
+        app(SubscriptionRepositoryInterface::class)->startTrial($company);
         $branch = Branch::create(['company_id' => $company->id, 'code' => 'TKO', 'name' => 'Toko']);
         $api = fn () => $this->actingAs($user, 'sanctum');
         $c = "/api/v1/companies/{$company->id}";

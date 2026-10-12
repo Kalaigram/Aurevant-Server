@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CompanyController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\ItemController;
+use App\Http\Controllers\Api\V1\PlanController;
 use App\Http\Controllers\Api\V1\PurchaseOrderController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\SaleController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\Api\V1\ShiftController;
 use App\Http\Controllers\Api\V1\StockController;
 use App\Http\Controllers\Api\V1\StockOpnameController;
 use App\Http\Controllers\Api\V1\StockTransferController;
+use App\Http\Controllers\Api\V1\SubscriptionController;
 use App\Http\Controllers\Api\V1\SupplierController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -25,10 +27,11 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
 
-    Route::middleware(['auth:sanctum', 'scope.cabang'])->group(function (): void {
+    Route::middleware(['auth:sanctum', 'scope.cabang', 'subscription.aktif'])->group(function (): void {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::get('/auth/me', [AuthController::class, 'me']);
         Route::get('/companies', [CompanyController::class, 'index']);
+        Route::post('/companies', [CompanyController::class, 'store']);
         Route::get('/companies/{company}/branches', [BranchController::class, 'index']);
         Route::post('/companies/{company}/branches', [BranchController::class, 'store'])->middleware('permission:cabang.kelola');
         Route::get('/companies/{company}/branches/{branch}', [BranchController::class, 'show']);
@@ -99,6 +102,13 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/pay', [ServiceOrderController::class, 'pay'])->middleware('permission:transaksi.buat');
         Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/cancel', [ServiceOrderController::class, 'cancel'])->middleware('permission:transaksi.buat');
         Route::get('/companies/{company}/audit-logs', [AuditLogController::class, 'index'])->middleware('permission:audit.lihat');
+        Route::get('/plans', [PlanController::class, 'index']);
+        Route::post('/plans', [PlanController::class, 'store'])->middleware('super.admin');
+        Route::get('/plans/{plan}', [PlanController::class, 'show']);
+        Route::put('/plans/{plan}', [PlanController::class, 'update'])->middleware('super.admin');
+        Route::delete('/plans/{plan}', [PlanController::class, 'destroy'])->middleware('super.admin');
+        Route::get('/companies/{company}/subscription', [SubscriptionController::class, 'show']);
+        Route::put('/companies/{company}/subscription', [SubscriptionController::class, 'update'])->middleware('super.admin');
         Route::get('/companies/{company}/reports/daily', [ReportController::class, 'daily'])->middleware('permission:keuangan.lihat');
         Route::get('/companies/{company}/reports/consolidation', [ReportController::class, 'consolidation'])->middleware('permission:laporan.konsolidasi');
         Route::post('/companies/{company}/reports/refresh', [ReportController::class, 'refresh'])->middleware('permission:laporan.konsolidasi');
