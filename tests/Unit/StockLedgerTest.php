@@ -84,4 +84,17 @@ class StockLedgerTest extends TestCase
         $this->assertEquals(-3, $hasil->qtyDelta);
         $this->assertEquals(97, $hasil->newBalance);
     }
+
+    public function test_retur_dan_void_menjaga_avg(): void
+    {
+        $ledger = new StockLedger;
+
+        $retur = $ledger->apply(60, 60000, 'retur', 40);
+        $this->assertEquals(100, $retur->newBalance);
+        $this->assertEquals(60000, $retur->newAvgCost);
+
+        $void = $ledger->apply(60, 60000, 'void', 40);
+        $this->assertEquals(100, $void->newBalance);
+        $this->assertEquals(60000, $void->newAvgCost);
+    }
 }

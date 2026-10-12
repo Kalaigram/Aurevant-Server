@@ -12,7 +12,7 @@ use App\Domain\Stock\Exceptions\InsufficientStockException;
  */
 final class StockLedger
 {
-    public const TYPE_IN = ['pembelian', 'transfer_masuk'];
+    public const TYPE_IN = ['pembelian', 'transfer_masuk', 'retur', 'void'];
 
     public const TYPE_OUT = ['penjualan', 'transfer_keluar', 'pemakaian_bahan'];
 
@@ -22,9 +22,12 @@ final class StockLedger
     {
         if (in_array($type, self::TYPE_IN, true)) {
             $newBalance = $balance + $qty;
-            $newAvgCost = $newBalance > 0
-                ? ($balance * $avgCost + $qty * (float) $unitCost) / $newBalance
-                : (float) $unitCost;
+            // retur/void tanpa harga: avg dipertahankan
+            $newAvgCost = $unitCost === null
+                ? $avgCost
+                : ($newBalance > 0
+                    ? ($balance * $avgCost + $qty * (float) $unitCost) / $newBalance
+                    : (float) $unitCost);
 
             return new StockResult($qty, $newBalance, $newAvgCost, null);
         }
