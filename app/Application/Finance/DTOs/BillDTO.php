@@ -23,7 +23,7 @@ final readonly class BillDTO
             id: $bill->id,
             amount: (string) $bill->amount,
             paidAmount: (string) $bill->paid_amount,
-            remaining: (string) $bill->remaining(),
+            remaining: number_format(round($bill->remaining(), 2), 2, '.', ''),
             dueAt: $bill->due_at?->toDateString(),
             isPaid: $bill->remaining() <= 0,
         );

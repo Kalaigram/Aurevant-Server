@@ -27,7 +27,7 @@ final readonly class ReceivableDTO
             customerId: $receivable->customer_id,
             amount: (string) $receivable->amount,
             paidAmount: (string) $receivable->paid_amount,
-            remaining: (string) $receivable->remaining(),
+            remaining: number_format(round($receivable->remaining(), 2), 2, '.', ''),
             dueAt: $receivable->due_at?->toDateString(),
             isPaid: $receivable->remaining() <= 0,
         );

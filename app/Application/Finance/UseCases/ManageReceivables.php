@@ -6,6 +6,7 @@ namespace App\Application\Finance\UseCases;
 
 use App\Application\Finance\DTOs\ReceivableDTO;
 use App\Application\Ledger\LedgerPoster;
+use App\Domain\Branch\Repositories\BranchRepositoryInterface;
 use App\Domain\Finance\Repositories\DebtRepositoryInterface;
 use App\Models\Branch;
 use App\Models\Company;
@@ -75,7 +76,7 @@ final class ManageReceivables
             $bucket = 'lancar';
 
             if ($receivable->due_at !== null && now()->greaterThan($receivable->due_at)) {
-                $days = (int) now()->diffInDays($receivable->due_at);
+                $days = (int) now()->diffInDays($receivable->due_at, true);
                 $bucket = match (true) {
                     $days <= 30 => '1_30',
                     $days <= 60 => '31_60',
@@ -100,7 +101,7 @@ final class ManageReceivables
             $bucket = 'lancar';
 
             if ($bill->due_at !== null && now()->greaterThan($bill->due_at)) {
-                $days = (int) now()->diffInDays($bill->due_at);
+                $days = (int) now()->diffInDays($bill->due_at, true);
                 $bucket = match (true) {
                     $days <= 30 => '1_30',
                     $days <= 60 => '31_60',
