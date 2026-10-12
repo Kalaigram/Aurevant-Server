@@ -15,6 +15,8 @@ interface BranchRepositoryInterface
 
     public function findForCompany(Company $company, int $id): ?Branch;
 
+    public function findByCodeForCompany(Company $company, string $code): ?Branch;
+
     public function createForCompany(Company $company, array $attributes): Branch;
 
     public function update(Branch $branch, array $attributes): Branch;

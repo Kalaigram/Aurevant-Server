@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CompanyController;
 use App\Http\Controllers\Api\V1\CustomerController;
+use App\Http\Controllers\Api\V1\ImportController;
 use App\Http\Controllers\Api\V1\ItemController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PlanController;
@@ -103,6 +104,9 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/pay', [ServiceOrderController::class, 'pay'])->middleware('permission:transaksi.buat');
         Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/cancel', [ServiceOrderController::class, 'cancel'])->middleware('permission:transaksi.buat');
         Route::get('/companies/{company}/audit-logs', [AuditLogController::class, 'index'])->middleware('permission:audit.lihat');
+        Route::get('/companies/{company}/imports/template/{type}', [ImportController::class, 'template'])->middleware('permission:impor.jalankan');
+        Route::post('/companies/{company}/imports/{type}', [ImportController::class, 'import'])->middleware('permission:impor.jalankan');
+        Route::get('/companies/{company}/exports/items', [ImportController::class, 'exportItems'])->middleware('permission:impor.jalankan');
         Route::get('/notifications', [NotificationController::class, 'index']);
         Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
         Route::post('/notifications/{notification}/read', [NotificationController::class, 'read']);

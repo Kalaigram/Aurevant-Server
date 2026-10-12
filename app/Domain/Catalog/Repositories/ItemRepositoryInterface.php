@@ -15,6 +15,8 @@ interface ItemRepositoryInterface
 
     public function findForCompany(Company $company, int $id): ?Item;
 
+    public function findByCodeForCompany(Company $company, string $code): ?Item;
+
     public function createForCompany(Company $company, array $attributes): Item;
 
     public function update(Item $item, array $attributes): Item;

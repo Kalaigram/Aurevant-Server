@@ -32,4 +32,9 @@ class Company extends Model
     {
         return $this->hasMany(Item::class);
     }
+
+    public function suppliers(): HasMany
+    {
+        return $this->hasMany(Supplier::class);
+    }
 }

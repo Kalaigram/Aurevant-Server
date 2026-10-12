@@ -26,6 +26,11 @@ final class ItemEloquentRepository implements ItemRepositoryInterface
         return $company->items()->with('prices')->whereKey($id)->first();
     }
 
+    public function findByCodeForCompany(Company $company, string $code): ?Item
+    {
+        return $company->items()->where('code', $code)->first();
+    }
+
     public function createForCompany(Company $company, array $attributes): Item
     {
         return $company->items()->create($attributes)->refresh();

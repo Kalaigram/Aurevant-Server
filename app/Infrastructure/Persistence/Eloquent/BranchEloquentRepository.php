@@ -21,6 +21,11 @@ final class BranchEloquentRepository implements BranchRepositoryInterface
         return $company->branches()->whereKey($id)->first();
     }
 
+    public function findByCodeForCompany(Company $company, string $code): ?Branch
+    {
+        return $company->branches()->where('code', $code)->first();
+    }
+
     public function createForCompany(Company $company, array $attributes): Branch
     {
         $branch = $company->branches()->create($attributes);
