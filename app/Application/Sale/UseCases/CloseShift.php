@@ -25,6 +25,7 @@ final class CloseShift
         }
 
         $tunaiMasuk = (float) $shift->sales()
+            ->whereIn('status', ['lunas', 'retur'])
             ->withSum(['payments as tunai_sum' => fn ($query) => $query->where('method', 'tunai')], 'amount')
             ->get()
             ->sum('tunai_sum');
