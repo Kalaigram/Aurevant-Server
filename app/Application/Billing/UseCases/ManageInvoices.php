@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Billing\UseCases;
 
+use App\Application\Audit\Audit;
 use App\Application\Billing\DTOs\InvoiceDTO;
 use App\Domain\Billing\Repositories\InvoiceRepositoryInterface;
 use App\Domain\Billing\Repositories\SubscriptionRepositoryInterface;
@@ -44,6 +45,8 @@ final class ManageInvoices
             'status' => 'menunggu',
         ]);
 
+        Audit::record($company, null, 'langganan.tagih', 'subscription_invoice', $invoice->id);
+
         return InvoiceDTO::fromModel($invoice);
     }
 
@@ -69,6 +72,8 @@ final class ManageInvoices
             $subscription->plan_id = $invoice->plan_id ?? $subscription->plan_id;
             $subscription->ends_at = $start->copy()->addDays(30)->toDateString();
             $this->billing->save($subscription);
+
+            Audit::record($company, null, 'langganan.bayar', 'subscription_invoice', $invoice->id);
 
             return InvoiceDTO::fromModel($invoice->refresh());
         });

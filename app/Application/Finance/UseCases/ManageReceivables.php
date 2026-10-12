@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Finance\UseCases;
 
+use App\Application\Audit\Audit;
 use App\Application\Finance\DTOs\ReceivableDTO;
 use App\Application\Ledger\LedgerPoster;
 use App\Domain\Branch\Repositories\BranchRepositoryInterface;
@@ -40,6 +41,8 @@ final class ManageReceivables
 
             ($this->ledgerPoster)->forReceivable($company, $receivable);
 
+            Audit::record($company, $receivable->branch_id, 'piutang.catat', 'receivable', $receivable->id);
+
             return ReceivableDTO::fromModel($receivable);
         });
     }
@@ -61,6 +64,8 @@ final class ManageReceivables
             ]);
 
             ($this->ledgerPoster)->forReceivablePayment($company, $receivable->refresh(), $method, $amount, $payment->id);
+
+            Audit::record($company, $receivable->branch_id, 'piutang.terima', 'receivable', $receivable->id, null, ['amount' => $amount]);
 
             return ReceivableDTO::fromModel($receivable->refresh()->load(['customer', 'payments']));
         });

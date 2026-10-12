@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Billing\UseCases;
 
+use App\Application\Audit\Audit;
 use App\Application\Billing\DTOs\SubscriptionDTO;
 use App\Domain\Billing\Repositories\SubscriptionRepositoryInterface;
 use App\Models\Company;
@@ -40,6 +41,9 @@ final class ChangeSubscription
         $subscription->plan_id = $planId ?? $subscription->plan_id;
         $subscription->ends_at = $endsAt;
 
-        return SubscriptionDTO::fromModel($this->billing->save($subscription));
+        $saved = $this->billing->save($subscription);
+        Audit::record($company, null, 'langganan.ubah', 'subscription', $saved->id, null, ['status' => $status]);
+
+        return SubscriptionDTO::fromModel($saved);
     }
 }

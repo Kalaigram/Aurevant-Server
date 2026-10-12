@@ -147,6 +147,8 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::get('/companies/{company}/journal-entries', [LedgerController::class, 'entries'])->middleware('permission:keuangan.lihat');
         Route::get('/companies/{company}/reports/profit-loss', [LedgerController::class, 'profitLoss'])->middleware('permission:keuangan.lihat');
         Route::get('/companies/{company}/reports/trial-balance', [LedgerController::class, 'trialBalance'])->middleware('permission:keuangan.lihat');
+        Route::get('/companies/{company}/reports/cash-flow', [LedgerController::class, 'cashFlow'])->middleware('permission:keuangan.lihat');
+        Route::get('/companies/{company}/reports/balance-sheet', [LedgerController::class, 'balanceSheet'])->middleware('permission:keuangan.lihat');
         Route::get('/companies/{company}/accounting-periods', [AccountingPeriodController::class, 'index']);
         Route::post('/companies/{company}/accounting-periods/close', [AccountingPeriodController::class, 'close'])->middleware('permission:periode.tutup');
         Route::get('/companies/{company}/accounting-periods/{period}', [AccountingPeriodController::class, 'show']);

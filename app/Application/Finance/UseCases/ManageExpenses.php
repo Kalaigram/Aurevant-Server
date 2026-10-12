@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Finance\UseCases;
 
+use App\Application\Audit\Audit;
 use App\Application\Finance\DTOs\ExpenseDTO;
 use App\Application\Ledger\LedgerPoster;
 use App\Domain\Finance\Repositories\ExpenseRepositoryInterface;
@@ -32,9 +33,10 @@ final class ManageExpenses
         $this->assertCategory($company, (int) $attributes['expense_category_id']);
         $this->assertBranch($company, (int) $attributes['branch_id']);
 
-        return ExpenseDTO::fromModel(
-            $this->expenses->createExpense($company, [...$attributes, 'status' => 'draft'])
-        );
+        $created = $this->expenses->createExpense($company, [...$attributes, 'status' => 'draft']);
+        Audit::record($company, $created->branch_id, 'biaya.catat', 'expense', $created->id);
+
+        return ExpenseDTO::fromModel($created);
     }
 
     public function approve(Company $company, Expense $expense): ExpenseDTO
@@ -51,6 +53,8 @@ final class ManageExpenses
 
             ($this->ledgerPoster)->forExpense($company, $saved);
 
+            Audit::record($company, $saved->branch_id, 'biaya.setujui', 'expense', $saved->id);
+
             return ExpenseDTO::fromModel($saved);
         });
     }
@@ -65,7 +69,10 @@ final class ManageExpenses
 
         $expense->status = 'ditolak';
 
-        return ExpenseDTO::fromModel($this->expenses->saveExpense($expense));
+        $saved = $this->expenses->saveExpense($expense);
+        Audit::record($company, $saved->branch_id, 'biaya.tolak', 'expense', $saved->id);
+
+        return ExpenseDTO::fromModel($saved);
     }
 
     private function assertCategory(Company $company, int $categoryId): void

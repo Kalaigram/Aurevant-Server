@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Finance\UseCases;
 
+use App\Application\Audit\Audit;
 use App\Application\Finance\DTOs\BillDTO;
 use App\Application\Ledger\LedgerPoster;
 use App\Domain\Finance\Repositories\DebtRepositoryInterface;
@@ -36,6 +37,8 @@ final class PayDebts
             ]);
 
             ($this->ledgerPoster)->forBillPayment($company, $bill->refresh(), $method, $amount, $payment->id);
+
+            Audit::record($company, $bill->order->branch_id, 'hutang.bayar', 'supplier_bill', $bill->id, null, ['amount' => $amount]);
 
             return BillDTO::fromModel($bill->refresh()->load('order.supplier'));
         });
