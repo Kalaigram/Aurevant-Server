@@ -13,6 +13,7 @@ final readonly class UserDTO
         public string $name,
         public string $email,
         public ?string $phone,
+        public bool $isSuperAdmin,
     ) {}
 
     public static function fromModel(User $user): self
@@ -22,6 +23,7 @@ final readonly class UserDTO
             name: $user->name,
             email: $user->email,
             phone: $user->phone,
+            isSuperAdmin: (bool) $user->is_super_admin,
         );
     }
 }

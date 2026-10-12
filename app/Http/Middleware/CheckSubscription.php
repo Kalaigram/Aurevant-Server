@@ -25,9 +25,13 @@ final class CheckSubscription
             return $next($request);
         }
 
+        if ($request->user()?->is_super_admin === true) {
+            return $next($request);
+        }
+
         $subscription = Subscription::query()->where('company_id', $company->id)->first();
-        if ($subscription === null || ! $subscription->allowsWrites()) {
-            throw new HttpException(403, 'Langganan tidak aktif.');
+        if ($company->status !== 'aktif' || $subscription === null || ! $subscription->allowsWrites()) {
+            throw new HttpException(403, 'Perusahaan atau langganan tidak aktif.');
         }
 
         return $next($request);

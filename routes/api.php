@@ -33,6 +33,7 @@ use App\Http\Controllers\Api\V1\StockTransferController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
 use App\Http\Controllers\Api\V1\SubscriptionInvoiceController;
 use App\Http\Controllers\Api\V1\SupplierController;
+use App\Http\Controllers\Api\V1\TenantController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -205,6 +206,9 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::delete('/companies/{company}/holidays/{holiday}', [ScheduleController::class, 'destroyHoliday'])->middleware('permission:pengaturan.kelola');
         Route::post('/holidays', [ScheduleController::class, 'storeNationalHoliday'])->middleware('super.admin');
         Route::delete('/holidays/{holiday}', [ScheduleController::class, 'destroyNationalHoliday'])->middleware('super.admin');
+        Route::get('/admin/companies', [TenantController::class, 'index'])->middleware('super.admin');
+        Route::get('/admin/companies/{company}', [TenantController::class, 'show'])->middleware('super.admin');
+        Route::patch('/admin/companies/{company}', [TenantController::class, 'update'])->middleware('super.admin');
         Route::get('/companies/{company}/leaves', [LeaveController::class, 'index']);
         Route::post('/companies/{company}/users/{user}/leaves', [LeaveController::class, 'store']);
         Route::post('/companies/{company}/leaves/{leave}/decide', [LeaveController::class, 'decide'])->middleware('permission:absensi.approve');
