@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Sale\UseCases;
 
+use App\Application\Audit\Audit;
 use App\Application\Sale\DTOs\SaleReturnDTO;
 use App\Application\Stock\UseCases\RecordStockMovement;
 use App\Domain\Sale\Repositories\SaleReturnRepositoryInterface;
@@ -113,6 +114,12 @@ final class CreateReturn
                 $sale->status = 'retur';
                 $sale->save();
             }
+
+            Audit::record(
+                $company, $branch, 'sale.retur', 'sale', $sale->id,
+                ['status' => 'lunas'],
+                ['status' => $sale->status, 'reason' => $reason, 'refund_method' => $refundMethod],
+            );
 
             return SaleReturnDTO::fromModel($retur);
         });

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Access\UseCases;
 
+use App\Application\Audit\Audit;
 use App\Domain\Access\Repositories\RoleRepositoryInterface;
 use App\Models\Company;
 use App\Models\User;
@@ -26,6 +27,8 @@ final class AssignRole
 
         setPermissionsTeamId($company->id);
         $user->assignRole($role);
+
+        Audit::record($company, null, 'access.role.assign', 'user', $user->id, null, ['role' => $roleName]);
     }
 
     public function revoke(Company $company, User $user, string $roleName): void
@@ -39,5 +42,7 @@ final class AssignRole
 
         setPermissionsTeamId($company->id);
         $user->removeRole($role);
+
+        Audit::record($company, null, 'access.role.revoke', 'user', $user->id, ['role' => $roleName], null);
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Sale\UseCases;
 
+use App\Application\Audit\Audit;
 use App\Application\Sale\DTOs\ShiftDTO;
 use App\Domain\Sale\Repositories\CashShiftRepositoryInterface;
 use App\Models\CashShift;
@@ -37,6 +38,13 @@ final class CloseShift
         $shift->status = 'ditutup';
         $shift->closed_at = now();
 
-        return ShiftDTO::fromModel($this->shifts->save($shift));
+        $dto = ShiftDTO::fromModel($this->shifts->save($shift));
+        Audit::record(
+            $shift->company, $shift->branch_id, 'shift.close', 'cash_shift', $shift->id,
+            ['status' => 'terbuka'],
+            ['status' => 'ditutup', 'difference' => (string) $dto->difference],
+        );
+
+        return $dto;
     }
 }

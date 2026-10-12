@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Stock\UseCases;
 
+use App\Application\Audit\Audit;
 use App\Application\Stock\DTOs\StockTransferDTO;
 use App\Domain\Stock\Repositories\StockBalanceRepositoryInterface;
 use App\Domain\Stock\Repositories\StockMovementRepositoryInterface;
@@ -95,7 +96,14 @@ final class ReceiveTransfer
             $transfer->status = 'diterima';
             $transfer->received_at = now();
 
-            return StockTransferDTO::fromModel($this->transfers->save($transfer));
+            $dto = StockTransferDTO::fromModel($this->transfers->save($transfer));
+            Audit::record(
+                $transfer->company, $transfer->to_branch_id, 'stock.transfer.receive', 'stock_transfer', $transfer->id,
+                ['status' => 'dikirim'],
+                ['status' => 'diterima'],
+            );
+
+            return $dto;
         });
     }
 }

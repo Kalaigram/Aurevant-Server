@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Stock\UseCases;
 
+use App\Application\Audit\Audit;
 use App\Application\Stock\DTOs\StockTransferDTO;
 use App\Domain\Stock\Repositories\StockTransferRepositoryInterface;
 use App\Models\StockTransfer;
@@ -17,12 +18,18 @@ final class TransitionTransfer
 
     public function submit(StockTransfer $transfer): StockTransferDTO
     {
-        return $this->move($transfer, 'draft', 'diajukan');
+        $dto = $this->move($transfer, 'draft', 'diajukan');
+        $this->trail($transfer, 'stock.transfer.submit', 'draft', 'diajukan');
+
+        return $dto;
     }
 
     public function approve(StockTransfer $transfer): StockTransferDTO
     {
-        return $this->move($transfer, 'diajukan', 'disetujui');
+        $dto = $this->move($transfer, 'diajukan', 'disetujui');
+        $this->trail($transfer, 'stock.transfer.approve', 'diajukan', 'disetujui');
+
+        return $dto;
     }
 
     public function cancel(StockTransfer $transfer): StockTransferDTO
@@ -33,9 +40,13 @@ final class TransitionTransfer
             ]);
         }
 
+        $from = $transfer->status;
         $transfer->status = 'dibatalkan';
 
-        return StockTransferDTO::fromModel($this->transfers->save($transfer));
+        $dto = StockTransferDTO::fromModel($this->transfers->save($transfer));
+        $this->trail($transfer, 'stock.transfer.cancel', $from, 'dibatalkan');
+
+        return $dto;
     }
 
     private function move(StockTransfer $transfer, string $from, string $to): StockTransferDTO
@@ -49,5 +60,14 @@ final class TransitionTransfer
         $transfer->status = $to;
 
         return StockTransferDTO::fromModel($this->transfers->save($transfer));
+    }
+
+    private function trail(StockTransfer $transfer, string $action, string $from, string $to): void
+    {
+        Audit::record(
+            $transfer->company, $transfer->from_branch_id, $action, 'stock_transfer', $transfer->id,
+            ['status' => $from],
+            ['status' => $to],
+        );
     }
 }

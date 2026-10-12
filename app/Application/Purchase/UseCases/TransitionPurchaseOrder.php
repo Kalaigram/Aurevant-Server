@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Purchase\UseCases;
 
+use App\Application\Audit\Audit;
 use App\Application\Purchase\DTOs\PurchaseOrderDTO;
 use App\Domain\Purchase\Repositories\PurchaseOrderRepositoryInterface;
 use App\Models\PurchaseOrder;
@@ -17,17 +18,26 @@ final class TransitionPurchaseOrder
 
     public function submit(PurchaseOrder $order): PurchaseOrderDTO
     {
-        return $this->move($order, 'draft', 'diajukan');
+        $dto = $this->move($order, 'draft', 'diajukan');
+        $this->trail($order, 'po.submit', 'draft', 'diajukan');
+
+        return $dto;
     }
 
     public function approve(PurchaseOrder $order): PurchaseOrderDTO
     {
-        return $this->move($order, 'diajukan', 'disetujui');
+        $dto = $this->move($order, 'diajukan', 'disetujui');
+        $this->trail($order, 'po.approve', 'diajukan', 'disetujui');
+
+        return $dto;
     }
 
     public function order(PurchaseOrder $order): PurchaseOrderDTO
     {
-        return $this->move($order, 'disetujui', 'dipesan');
+        $dto = $this->move($order, 'disetujui', 'dipesan');
+        $this->trail($order, 'po.order', 'disetujui', 'dipesan');
+
+        return $dto;
     }
 
     public function cancel(PurchaseOrder $order): PurchaseOrderDTO
@@ -38,9 +48,13 @@ final class TransitionPurchaseOrder
             ]);
         }
 
+        $from = $order->status;
         $order->status = 'dibatalkan';
 
-        return PurchaseOrderDTO::fromModel($this->orders->save($order));
+        $dto = PurchaseOrderDTO::fromModel($this->orders->save($order));
+        $this->trail($order, 'po.cancel', $from, 'dibatalkan');
+
+        return $dto;
     }
 
     private function move(PurchaseOrder $order, string $from, string $to): PurchaseOrderDTO
@@ -54,5 +68,14 @@ final class TransitionPurchaseOrder
         $order->status = $to;
 
         return PurchaseOrderDTO::fromModel($this->orders->save($order));
+    }
+
+    private function trail(PurchaseOrder $order, string $action, string $from, string $to): void
+    {
+        Audit::record(
+            $order->company, $order->branch_id, $action, 'purchase_order', $order->id,
+            ['status' => $from],
+            ['status' => $to],
+        );
     }
 }

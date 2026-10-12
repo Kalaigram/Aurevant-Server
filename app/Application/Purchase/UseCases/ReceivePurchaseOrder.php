@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Purchase\UseCases;
 
+use App\Application\Audit\Audit;
 use App\Application\Purchase\DTOs\PurchaseOrderDTO;
 use App\Application\Stock\UseCases\RecordStockMovement;
 use App\Domain\Purchase\Repositories\GoodsReceiptRepositoryInterface;
@@ -100,7 +101,14 @@ final class ReceivePurchaseOrder
                 $order->status = 'selesai';
             }
 
-            return PurchaseOrderDTO::fromModel($this->orders->save($order));
+            $dto = PurchaseOrderDTO::fromModel($this->orders->save($order));
+            Audit::record(
+                $order->company, $order->branch_id, 'po.receive', 'purchase_order', $order->id,
+                ['status' => 'dipesan'],
+                ['status' => $order->status, 'bill_amount' => (string) $bill->amount],
+            );
+
+            return $dto;
         });
     }
 }

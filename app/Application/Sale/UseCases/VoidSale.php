@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Sale\UseCases;
 
+use App\Application\Audit\Audit;
 use App\Application\Sale\DTOs\SaleReturnDTO;
 use App\Application\Stock\UseCases\RecordStockMovement;
 use App\Domain\Sale\Repositories\SaleRepositoryInterface;
@@ -51,6 +52,12 @@ final class VoidSale
 
             $sale->status = 'void';
             $sale->save();
+
+            Audit::record(
+                $company, $branch, 'sale.void', 'sale', $sale->id,
+                ['status' => 'lunas'],
+                ['status' => 'void', 'reason' => $reason],
+            );
 
             return SaleReturnDTO::fromModel(
                 $this->returns->createWithItems([

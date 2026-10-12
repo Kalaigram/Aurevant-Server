@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Stock\UseCases;
 
+use App\Application\Audit\Audit;
 use App\Application\Stock\DTOs\StockTransferDTO;
 use App\Domain\Stock\Repositories\StockBalanceRepositoryInterface;
 use App\Domain\Stock\Repositories\StockMovementRepositoryInterface;
@@ -74,7 +75,14 @@ final class ShipTransfer
             $transfer->status = 'dikirim';
             $transfer->shipped_at = now();
 
-            return StockTransferDTO::fromModel($this->transfers->save($transfer));
+            $dto = StockTransferDTO::fromModel($this->transfers->save($transfer));
+            Audit::record(
+                $transfer->company, $transfer->from_branch_id, 'stock.transfer.ship', 'stock_transfer', $transfer->id,
+                ['status' => 'disetujui'],
+                ['status' => 'dikirim'],
+            );
+
+            return $dto;
         });
     }
 }

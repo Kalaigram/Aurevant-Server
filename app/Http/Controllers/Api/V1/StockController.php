@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Application\Audit\Audit;
 use App\Application\Stock\UseCases\ListStockBalances;
 use App\Application\Stock\UseCases\ListStockMovements;
 use App\Application\Stock\UseCases\RecordStockMovement;
@@ -59,16 +60,25 @@ class StockController extends Controller
             'note' => ['nullable', 'string', 'max:500'],
         ]);
 
+        $branch = $this->scopedBranch($company, $branch, $branches);
+        $dto = $useCase(
+            $company,
+            $branch,
+            (int) $validated['item_id'],
+            $validated['type'],
+            (float) $validated['qty'],
+            isset($validated['unit_cost']) ? (float) $validated['unit_cost'] : null,
+            $validated['note'] ?? null,
+        );
+
+        Audit::record(
+            $company, $branch, 'stock.adjust', 'item', (int) $validated['item_id'],
+            null,
+            ['type' => $validated['type'], 'qty' => (string) $validated['qty']],
+        );
+
         return ApiResponse::success(
-            $useCase(
-                $company,
-                $this->scopedBranch($company, $branch, $branches),
-                (int) $validated['item_id'],
-                $validated['type'],
-                (float) $validated['qty'],
-                isset($validated['unit_cost']) ? (float) $validated['unit_cost'] : null,
-                $validated['note'] ?? null,
-            ),
+            $dto,
             'Mutasi stok dicatat.',
             201
         );

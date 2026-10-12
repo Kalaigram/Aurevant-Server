@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Stock\UseCases;
 
+use App\Application\Audit\Audit;
 use App\Application\Stock\DTOs\StockOpnameDTO;
 use App\Domain\Stock\Repositories\StockOpnameRepositoryInterface;
 use App\Models\StockOpname;
@@ -44,7 +45,14 @@ final class ApproveOpname
 
             $opname->status = 'disetujui';
 
-            return StockOpnameDTO::fromModel($this->opnames->save($opname));
+            $dto = StockOpnameDTO::fromModel($this->opnames->save($opname));
+            Audit::record(
+                $opname->company, $opname->branch_id, 'stock.opname.approve', 'stock_opname', $opname->id,
+                ['status' => 'diajukan'],
+                ['status' => 'disetujui'],
+            );
+
+            return $dto;
         });
     }
 }
