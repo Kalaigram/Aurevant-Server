@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\AccessRoleController;
 use App\Http\Controllers\Api\V1\AssignmentController;
+use App\Http\Controllers\Api\V1\AttendanceController;
 use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BranchController;
@@ -104,6 +105,12 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/complete', [ServiceOrderController::class, 'complete'])->middleware('permission:transaksi.buat');
         Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/pay', [ServiceOrderController::class, 'pay'])->middleware('permission:transaksi.buat');
         Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/cancel', [ServiceOrderController::class, 'cancel'])->middleware('permission:transaksi.buat');
+        Route::get('/companies/{company}/branches/{branch}/attendance-qr', [AttendanceController::class, 'qr']);
+        Route::post('/companies/{company}/attendance/clock-in', [AttendanceController::class, 'clockIn']);
+        Route::post('/companies/{company}/attendance/clock-out', [AttendanceController::class, 'clockOut']);
+        Route::get('/companies/{company}/attendance/me', [AttendanceController::class, 'mine']);
+        Route::get('/companies/{company}/branches/{branch}/attendance', [AttendanceController::class, 'branchDay'])->middleware('permission:absensi.approve');
+        Route::delete('/companies/{company}/users/{user}/device', [AttendanceController::class, 'resetDevice'])->middleware('permission:absensi.approve');
         Route::get('/companies/{company}/audit-logs', [AuditLogController::class, 'index'])->middleware('permission:audit.lihat');
         Route::get('/companies/{company}/imports/template/{type}', [ImportController::class, 'template'])->middleware('permission:impor.jalankan');
         Route::post('/companies/{company}/imports/{type}', [ImportController::class, 'import'])->middleware('permission:impor.jalankan');

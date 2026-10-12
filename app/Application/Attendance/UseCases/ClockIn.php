@@ -83,7 +83,7 @@ final class ClockIn
 
         $days = ($this->schedule)($company, $user, $date, $date);
         $today = $days[0];
-        if ($today->isOff() || $today->startsAt === null) {
+        if ($today->isOff || $today->startsAt === null) {
             throw ValidationException::withMessages([
                 'attendance' => 'Tidak ada jadwal kerja hari ini.',
             ]);

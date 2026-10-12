@@ -50,7 +50,9 @@ final class ClockOut
         }
 
         $device = $this->devices->findForUser($user);
-        if ($device === null || $device->device_id !== $deviceId) {
+        if ($device === null) {
+            $this->devices->bind($user, $deviceId);
+        } elseif ($device->device_id !== $deviceId) {
             throw ValidationException::withMessages([
                 'device_id' => 'Perangkat tidak dikenal.',
             ]);
