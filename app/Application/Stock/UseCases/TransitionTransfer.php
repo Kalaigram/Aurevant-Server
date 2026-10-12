@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Stock\UseCases;
 
 use App\Application\Audit\Audit;
+use App\Application\Notify\Notifier;
 use App\Application\Stock\DTOs\StockTransferDTO;
 use App\Domain\Stock\Repositories\StockTransferRepositoryInterface;
 use App\Models\StockTransfer;
@@ -20,6 +21,10 @@ final class TransitionTransfer
     {
         $dto = $this->move($transfer, 'draft', 'diajukan');
         $this->trail($transfer, 'stock.transfer.submit', 'draft', 'diajukan');
+        Notifier::toPermissioned(
+            $transfer->company, ['stok.transfer'], 'transfer.diajukan',
+            'Transfer #'.$transfer->id.' diajukan.', null, '/transfers/'.$transfer->id, auth()->id(),
+        );
 
         return $dto;
     }
@@ -28,6 +33,10 @@ final class TransitionTransfer
     {
         $dto = $this->move($transfer, 'diajukan', 'disetujui');
         $this->trail($transfer, 'stock.transfer.approve', 'diajukan', 'disetujui');
+        Notifier::toPermissioned(
+            $transfer->company, ['stok.transfer'], 'transfer.disetujui',
+            'Transfer #'.$transfer->id.' disetujui.', null, '/transfers/'.$transfer->id, auth()->id(),
+        );
 
         return $dto;
     }

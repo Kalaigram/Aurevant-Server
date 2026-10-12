@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Purchase\UseCases;
 
 use App\Application\Audit\Audit;
+use App\Application\Notify\Notifier;
 use App\Application\Purchase\DTOs\PurchaseOrderDTO;
 use App\Domain\Purchase\Repositories\PurchaseOrderRepositoryInterface;
 use App\Models\PurchaseOrder;
@@ -20,6 +21,10 @@ final class TransitionPurchaseOrder
     {
         $dto = $this->move($order, 'draft', 'diajukan');
         $this->trail($order, 'po.submit', 'draft', 'diajukan');
+        Notifier::toPermissioned(
+            $order->company, ['po.setujui'], 'po.diajukan',
+            'PO #'.$order->id.' diajukan.', null, '/purchase-orders/'.$order->id, auth()->id(),
+        );
 
         return $dto;
     }
@@ -28,6 +33,10 @@ final class TransitionPurchaseOrder
     {
         $dto = $this->move($order, 'diajukan', 'disetujui');
         $this->trail($order, 'po.approve', 'diajukan', 'disetujui');
+        Notifier::toPermissioned(
+            $order->company, ['po.setujui'], 'po.disetujui',
+            'PO #'.$order->id.' disetujui.', null, '/purchase-orders/'.$order->id, auth()->id(),
+        );
 
         return $dto;
     }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Stock\UseCases;
 
 use App\Application\Audit\Audit;
+use App\Application\Notify\Notifier;
 use App\Application\Stock\DTOs\StockOpnameDTO;
 use App\Domain\Stock\Repositories\StockOpnameRepositoryInterface;
 use App\Models\StockOpname;
@@ -50,6 +51,10 @@ final class ApproveOpname
                 $opname->company, $opname->branch_id, 'stock.opname.approve', 'stock_opname', $opname->id,
                 ['status' => 'diajukan'],
                 ['status' => 'disetujui'],
+            );
+            Notifier::toPermissioned(
+                $opname->company, ['stok.opname'], 'opname.disetujui',
+                'Opname #'.$opname->id.' disetujui.', null, null, auth()->id(),
             );
 
             return $dto;

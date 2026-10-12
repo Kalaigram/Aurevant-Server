@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Purchase\UseCases;
 
 use App\Application\Audit\Audit;
+use App\Application\Notify\Notifier;
 use App\Application\Purchase\DTOs\PurchaseOrderDTO;
 use App\Application\Stock\UseCases\RecordStockMovement;
 use App\Domain\Purchase\Repositories\GoodsReceiptRepositoryInterface;
@@ -106,6 +107,10 @@ final class ReceivePurchaseOrder
                 $order->company, $order->branch_id, 'po.receive', 'purchase_order', $order->id,
                 ['status' => 'dipesan'],
                 ['status' => $order->status, 'bill_amount' => (string) $bill->amount],
+            );
+            Notifier::toPermissioned(
+                $order->company, ['po.setujui'], 'po.diterima',
+                'PO #'.$order->id.' ada penerimaan barang.', null, '/purchase-orders/'.$order->id, auth()->id(),
             );
 
             return $dto;

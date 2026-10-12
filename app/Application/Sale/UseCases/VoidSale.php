@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Sale\UseCases;
 
 use App\Application\Audit\Audit;
+use App\Application\Notify\Notifier;
 use App\Application\Report\UseCases\RebuildDailySummary;
 use App\Application\Sale\DTOs\SaleReturnDTO;
 use App\Application\Stock\UseCases\RecordStockMovement;
@@ -59,6 +60,10 @@ final class VoidSale
                 $company, $branch, 'sale.void', 'sale', $sale->id,
                 ['status' => 'lunas'],
                 ['status' => 'void', 'reason' => $reason],
+            );
+            Notifier::toPermissioned(
+                $company, ['transaksi.void'], 'sale.void',
+                'Nota '.$sale->number.' divoid.', null, '/sales/'.$sale->id, auth()->id(),
             );
 
             foreach (array_unique([$sale->created_at->toDateString(), now()->toDateString()]) as $date) {

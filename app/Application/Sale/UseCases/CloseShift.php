@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Sale\UseCases;
 
 use App\Application\Audit\Audit;
+use App\Application\Notify\Notifier;
 use App\Application\Sale\DTOs\ShiftDTO;
 use App\Domain\Sale\Repositories\CashShiftRepositoryInterface;
 use App\Models\CashShift;
@@ -45,6 +46,13 @@ final class CloseShift
             ['status' => 'terbuka'],
             ['status' => 'ditutup', 'difference' => (string) $dto->difference],
         );
+
+        if ((float) $dto->difference !== 0.0) {
+            Notifier::toPermissioned(
+                $shift->company, ['dashboard.konsolidasi'], 'shift.selisih',
+                'Shift #'.$shift->id.' selisih '.$dto->difference.'.', null, null, auth()->id(),
+            );
+        }
 
         return $dto;
     }

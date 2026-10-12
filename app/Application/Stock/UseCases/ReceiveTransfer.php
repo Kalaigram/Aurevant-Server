@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Stock\UseCases;
 
 use App\Application\Audit\Audit;
+use App\Application\Notify\Notifier;
 use App\Application\Stock\DTOs\StockTransferDTO;
 use App\Domain\Stock\Repositories\StockBalanceRepositoryInterface;
 use App\Domain\Stock\Repositories\StockMovementRepositoryInterface;
@@ -101,6 +102,10 @@ final class ReceiveTransfer
                 $transfer->company, $transfer->to_branch_id, 'stock.transfer.receive', 'stock_transfer', $transfer->id,
                 ['status' => 'dikirim'],
                 ['status' => 'diterima'],
+            );
+            Notifier::toPermissioned(
+                $transfer->company, ['stok.transfer'], 'transfer.diterima',
+                'Transfer #'.$transfer->id.' diterima.', null, '/transfers/'.$transfer->id, auth()->id(),
             );
 
             return $dto;
