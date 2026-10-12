@@ -8,17 +8,21 @@ use App\Models\Company;
 use App\Models\Customer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\WithPermissions;
 use Tests\TestCase;
 
 class CustomerTest extends TestCase
 {
     use RefreshDatabase;
+    use WithPermissions;
 
     public function test_crud_pelanggan_scoped_per_company(): void
     {
         $user = User::factory()->create();
         $a = Company::create(['name' => 'A', 'slug' => 'a', 'status' => 'aktif']);
         $b = Company::create(['name' => 'B', 'slug' => 'b', 'status' => 'aktif']);
+        $this->owner($user, $a);
+        $this->owner($user, $b);
         Customer::create(['company_id' => $b->id, 'name' => 'Milik B', 'phone' => '0800']);
         $api = fn () => $this->actingAs($user, 'sanctum');
 

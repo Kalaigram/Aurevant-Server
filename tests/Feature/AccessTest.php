@@ -9,11 +9,13 @@ use App\Models\Company;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\WithPermissions;
 use Tests\TestCase;
 
 class AccessTest extends TestCase
 {
     use RefreshDatabase;
+    use WithPermissions;
 
     protected function setUp(): void
     {
@@ -27,6 +29,7 @@ class AccessTest extends TestCase
         $owner = User::factory()->create();
         $staff = User::factory()->create();
         $company = Company::create(['name' => 'PT A', 'slug' => 'pt-a', 'status' => 'aktif']);
+        $this->owner($owner, $company);
         $other = Company::create(['name' => 'PT B', 'slug' => 'pt-b', 'status' => 'aktif']);
         $branch = Branch::create(['company_id' => $company->id, 'code' => 'TKO', 'name' => 'Toko']);
 

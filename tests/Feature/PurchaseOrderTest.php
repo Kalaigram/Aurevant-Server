@@ -10,16 +10,19 @@ use App\Models\Item;
 use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\WithPermissions;
 use Tests\TestCase;
 
 class PurchaseOrderTest extends TestCase
 {
     use RefreshDatabase;
+    use WithPermissions;
 
     private function setupWorld(): array
     {
         $user = User::factory()->create();
         $company = Company::create(['name' => 'PT A', 'slug' => 'pt-a', 'status' => 'aktif']);
+        $this->owner($user, $company);
         $branch = Branch::create(['company_id' => $company->id, 'code' => 'GUD', 'name' => 'Gudang']);
         $supplier = Supplier::create(['company_id' => $company->id, 'name' => 'PT Sumber']);
         $item = Item::create([

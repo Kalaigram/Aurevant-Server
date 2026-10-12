@@ -8,11 +8,13 @@ use App\Models\Branch;
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\WithPermissions;
 use Tests\TestCase;
 
 class BranchTest extends TestCase
 {
     use RefreshDatabase;
+    use WithPermissions;
 
     private function auth(): User
     {
@@ -31,6 +33,8 @@ class BranchTest extends TestCase
         $user = $this->auth();
         $a = Company::create(['name' => 'A', 'slug' => 'a', 'status' => 'aktif']);
         $b = Company::create(['name' => 'B', 'slug' => 'b', 'status' => 'aktif']);
+        $this->owner($user, $a);
+        $this->owner($user, $b);
         Branch::create(['company_id' => $a->id, 'code' => 'A1', 'name' => 'Cabang A1']);
         Branch::create(['company_id' => $b->id, 'code' => 'B1', 'name' => 'Cabang B1']);
 
@@ -49,6 +53,8 @@ class BranchTest extends TestCase
         $user = $this->auth();
         $a = Company::create(['name' => 'A', 'slug' => 'a', 'status' => 'aktif']);
         $b = Company::create(['name' => 'B', 'slug' => 'b', 'status' => 'aktif']);
+        $this->owner($user, $a);
+        $this->owner($user, $b);
         $api = fn () => $this->actingAs($user, 'sanctum');
 
         $api()->postJson("/api/v1/companies/{$a->id}/branches", [
@@ -83,6 +89,8 @@ class BranchTest extends TestCase
         $user = $this->auth();
         $a = Company::create(['name' => 'A', 'slug' => 'a', 'status' => 'aktif']);
         $b = Company::create(['name' => 'B', 'slug' => 'b', 'status' => 'aktif']);
+        $this->owner($user, $a);
+        $this->owner($user, $b);
         $branch = Branch::create(['company_id' => $a->id, 'code' => 'A1', 'name' => 'Lama']);
         $api = fn () => $this->actingAs($user, 'sanctum');
 

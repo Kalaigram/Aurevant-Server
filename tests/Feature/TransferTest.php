@@ -9,16 +9,19 @@ use App\Models\Company;
 use App\Models\Item;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\WithPermissions;
 use Tests\TestCase;
 
 class TransferTest extends TestCase
 {
     use RefreshDatabase;
+    use WithPermissions;
 
     private function setupWorld(): array
     {
         $user = User::factory()->create();
         $company = Company::create(['name' => 'PT A', 'slug' => 'pt-a', 'status' => 'aktif']);
+        $this->owner($user, $company);
         $gudang = Branch::create(['company_id' => $company->id, 'code' => 'GUD', 'name' => 'Gudang', 'type' => 'gudang']);
         $toko = Branch::create(['company_id' => $company->id, 'code' => 'TKO', 'name' => 'Toko']);
         $item = Item::create([

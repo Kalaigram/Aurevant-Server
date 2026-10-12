@@ -12,17 +12,20 @@ use App\Models\ItemConsumable;
 use App\Models\ItemPrice;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\WithPermissions;
 use Tests\TestCase;
 
 class ServiceOrderTest extends TestCase
 {
     use RefreshDatabase;
+    use WithPermissions;
 
     private function setupWorld(): array
     {
         $user = User::factory()->create();
         $teknisi = User::factory()->create();
         $company = Company::create(['name' => 'PT A', 'slug' => 'pt-a', 'status' => 'aktif']);
+        $this->owner($user, $company);
         $branch = Branch::create(['company_id' => $company->id, 'code' => 'BKL', 'name' => 'Bengkel']);
         $customer = Customer::create(['company_id' => $company->id, 'name' => 'Pak Dudi', 'phone' => '08100']);
         $servis = Item::create([

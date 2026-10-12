@@ -10,11 +10,13 @@ use App\Models\Company;
 use App\Models\Item;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\WithPermissions;
 use Tests\TestCase;
 
 class ItemTest extends TestCase
 {
     use RefreshDatabase;
+    use WithPermissions;
 
     private function auth(): User
     {
@@ -40,6 +42,7 @@ class ItemTest extends TestCase
     {
         $user = $this->auth();
         [$company] = $this->companyWithBranch();
+        $this->owner($user, $company);
         $category = Category::create(['company_id' => $company->id, 'name' => 'Sparepart']);
         $api = fn () => $this->actingAs($user, 'sanctum');
 
@@ -87,6 +90,8 @@ class ItemTest extends TestCase
         $user = $this->auth();
         [$a, $cabangA] = $this->companyWithBranch('A');
         [$b, $cabangB] = $this->companyWithBranch('B');
+        $this->owner($user, $a);
+        $this->owner($user, $b);
         $item = Item::create([
             'company_id' => $a->id, 'code' => 'OLI-01', 'name' => 'Oli',
             'type' => 'barang', 'unit' => 'pcs',

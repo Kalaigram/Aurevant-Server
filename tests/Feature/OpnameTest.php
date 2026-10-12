@@ -9,16 +9,19 @@ use App\Models\Company;
 use App\Models\Item;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\WithPermissions;
 use Tests\TestCase;
 
 class OpnameTest extends TestCase
 {
     use RefreshDatabase;
+    use WithPermissions;
 
     private function setupWorld(): array
     {
         $user = User::factory()->create();
         $company = Company::create(['name' => 'PT A', 'slug' => 'pt-a', 'status' => 'aktif']);
+        $this->owner($user, $company);
         $branch = Branch::create(['company_id' => $company->id, 'code' => 'TKO', 'name' => 'Toko']);
         $item = Item::create([
             'company_id' => $company->id, 'code' => 'OLI-01', 'name' => 'Oli',

@@ -9,16 +9,19 @@ use App\Models\Company;
 use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\WithPermissions;
 use Tests\TestCase;
 
 class ShiftTest extends TestCase
 {
     use RefreshDatabase;
+    use WithPermissions;
 
     public function test_buka_tutup_shift_dan_selisih(): void
     {
         $user = User::factory()->create();
         $company = Company::create(['name' => 'PT A', 'slug' => 'pt-a', 'status' => 'aktif']);
+        $this->owner($user, $company);
         $branch = Branch::create(['company_id' => $company->id, 'code' => 'TKO', 'name' => 'Toko']);
         $api = fn () => $this->actingAs($user, 'sanctum');
         $base = "/api/v1/companies/{$company->id}/branches/{$branch->id}/shifts";
@@ -50,6 +53,7 @@ class ShiftTest extends TestCase
     {
         $user = User::factory()->create();
         $company = Company::create(['name' => 'PT A', 'slug' => 'pt-a', 'status' => 'aktif']);
+        $this->owner($user, $company);
         $branch = Branch::create(['company_id' => $company->id, 'code' => 'TKO', 'name' => 'Toko']);
         $api = fn () => $this->actingAs($user, 'sanctum');
 

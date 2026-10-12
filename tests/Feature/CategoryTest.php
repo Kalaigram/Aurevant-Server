@@ -8,11 +8,13 @@ use App\Models\Category;
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\WithPermissions;
 use Tests\TestCase;
 
 class CategoryTest extends TestCase
 {
     use RefreshDatabase;
+    use WithPermissions;
 
     private function auth(): User
     {
@@ -31,6 +33,8 @@ class CategoryTest extends TestCase
         $user = $this->auth();
         $a = Company::create(['name' => 'A', 'slug' => 'a', 'status' => 'aktif']);
         $b = Company::create(['name' => 'B', 'slug' => 'b', 'status' => 'aktif']);
+        $this->owner($user, $a);
+        $this->owner($user, $b);
         Category::create(['company_id' => $b->id, 'name' => 'Milik B']);
         $api = fn () => $this->actingAs($user, 'sanctum');
 
