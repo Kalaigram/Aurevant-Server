@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Domain\Access\Repositories\AssignmentRepositoryInterface;
+use App\Domain\Access\Repositories\RoleRepositoryInterface;
 use App\Domain\Branch\Repositories\BranchRepositoryInterface;
 use App\Domain\Catalog\Repositories\CategoryRepositoryInterface;
 use App\Domain\Catalog\Repositories\ItemPriceRepositoryInterface;
@@ -22,6 +24,7 @@ use App\Domain\Stock\Repositories\StockMovementRepositoryInterface;
 use App\Domain\Stock\Repositories\StockOpnameRepositoryInterface;
 use App\Domain\Stock\Repositories\StockTransferRepositoryInterface;
 use App\Domain\User\Repositories\UserRepositoryInterface;
+use App\Infrastructure\Persistence\Eloquent\AssignmentEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\BranchEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\CashShiftEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\CategoryEloquentRepository;
@@ -31,6 +34,7 @@ use App\Infrastructure\Persistence\Eloquent\GoodsReceiptEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\ItemEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\ItemPriceEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\PurchaseOrderEloquentRepository;
+use App\Infrastructure\Persistence\Eloquent\RoleEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\SaleEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\SaleReturnEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\SaleSequenceEloquentRepository;
@@ -55,6 +59,8 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(CompanyRepositoryInterface::class, CompanyEloquentRepository::class);
+        $this->app->bind(RoleRepositoryInterface::class, RoleEloquentRepository::class);
+        $this->app->bind(AssignmentRepositoryInterface::class, AssignmentEloquentRepository::class);
         $this->app->bind(UserRepositoryInterface::class, UserEloquentRepository::class);
         $this->app->bind(BranchRepositoryInterface::class, BranchEloquentRepository::class);
         $this->app->bind(CategoryRepositoryInterface::class, CategoryEloquentRepository::class);

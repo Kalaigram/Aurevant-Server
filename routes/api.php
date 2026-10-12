@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AccessRoleController;
+use App\Http\Controllers\Api\V1\AssignmentController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\CategoryController;
@@ -94,6 +96,22 @@ Route::middleware('throttle:api')->prefix('v1')->group(function (): void {
         Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/complete', [ServiceOrderController::class, 'complete']);
         Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/pay', [ServiceOrderController::class, 'pay']);
         Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/cancel', [ServiceOrderController::class, 'cancel']);
+
+        Route::middleware('company.team')->prefix('/companies/{company}/access')->group(function (): void {
+            Route::get('/permissions', [AccessRoleController::class, 'permissions']);
+            Route::get('/templates', [AccessRoleController::class, 'templates']);
+            Route::get('/roles', [AccessRoleController::class, 'index']);
+            Route::post('/roles', [AccessRoleController::class, 'store']);
+            Route::get('/roles/{role}', [AccessRoleController::class, 'show']);
+            Route::put('/roles/{role}', [AccessRoleController::class, 'update']);
+            Route::delete('/roles/{role}', [AccessRoleController::class, 'destroy']);
+            Route::post('/users/{user}/roles', [AccessRoleController::class, 'assign']);
+            Route::delete('/users/{user}/roles/{role}', [AccessRoleController::class, 'revoke']);
+            Route::get('/assignments', [AssignmentController::class, 'index']);
+            Route::post('/users/{user}/assignments', [AssignmentController::class, 'store']);
+            Route::get('/assignments/{assignment}', [AssignmentController::class, 'show']);
+            Route::post('/assignments/{assignment}/close', [AssignmentController::class, 'close']);
+        });
     });
 });
 

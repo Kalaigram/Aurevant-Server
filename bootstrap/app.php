@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Stock\Exceptions\InsufficientStockException;
+use App\Http\Middleware\SetCompanyTeam;
 use App\Shared\Responses\ApiResponse;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
@@ -18,7 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'company.team' => SetCompanyTeam::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (AuthenticationException $e, Request $request) {
