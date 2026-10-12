@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CompanyController;
 use App\Http\Controllers\Api\V1\CustomerController;
+use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\DebtController;
 use App\Http\Controllers\Api\V1\FinanceController;
 use App\Http\Controllers\Api\V1\ImportController;
@@ -136,6 +137,7 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::put('/plans/{plan}', [PlanController::class, 'update'])->middleware('super.admin');
         Route::delete('/plans/{plan}', [PlanController::class, 'destroy'])->middleware('super.admin');
         Route::get('/companies/{company}/subscription', [SubscriptionController::class, 'show']);
+        Route::get('/companies/{company}/dashboard', [DashboardController::class, 'show']);
         Route::put('/companies/{company}/subscription', [SubscriptionController::class, 'update'])->middleware('super.admin');
         Route::get('/companies/{company}/subscription-invoices', [SubscriptionInvoiceController::class, 'index']);
         Route::post('/companies/{company}/subscription-invoices', [SubscriptionInvoiceController::class, 'store'])->middleware('super.admin');
