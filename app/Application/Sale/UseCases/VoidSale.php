@@ -10,6 +10,7 @@ use App\Application\Notify\Notifier;
 use App\Application\Report\UseCases\RebuildDailySummary;
 use App\Application\Sale\DTOs\SaleReturnDTO;
 use App\Application\Stock\UseCases\RecordStockMovement;
+use App\Domain\Approval\Services\ApprovalLedger;
 use App\Domain\Sale\Repositories\SaleRepositoryInterface;
 use App\Domain\Sale\Repositories\SaleReturnRepositoryInterface;
 use App\Models\Branch;
@@ -83,6 +84,10 @@ final class VoidSale
             ], []);
 
             ($this->ledgerPoster)->forVoid($sale, $retur->id);
+
+            ApprovalLedger::resolve(
+                $company, 'sale', $sale->id, 'sale.void', auth()->user(), true, $reason,
+            );
 
             return SaleReturnDTO::fromModel($retur);
         });

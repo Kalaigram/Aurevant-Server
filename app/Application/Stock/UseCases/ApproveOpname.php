@@ -7,6 +7,7 @@ namespace App\Application\Stock\UseCases;
 use App\Application\Audit\Audit;
 use App\Application\Notify\Notifier;
 use App\Application\Stock\DTOs\StockOpnameDTO;
+use App\Domain\Approval\Services\ApprovalLedger;
 use App\Domain\Stock\Repositories\StockOpnameRepositoryInterface;
 use App\Models\StockOpname;
 use Illuminate\Support\Facades\DB;
@@ -55,6 +56,9 @@ final class ApproveOpname
             Notifier::toPermissioned(
                 $opname->company, ['stok.opname'], 'opname.disetujui',
                 'Opname #'.$opname->id.' disetujui.', null, null, auth()->id(),
+            );
+            ApprovalLedger::resolve(
+                $opname->company, 'stock_opname', $opname->id, 'opname.approve', auth()->user(), true,
             );
 
             return $dto;

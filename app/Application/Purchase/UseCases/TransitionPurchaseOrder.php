@@ -7,6 +7,7 @@ namespace App\Application\Purchase\UseCases;
 use App\Application\Audit\Audit;
 use App\Application\Notify\Notifier;
 use App\Application\Purchase\DTOs\PurchaseOrderDTO;
+use App\Domain\Approval\Services\ApprovalLedger;
 use App\Domain\Purchase\Repositories\PurchaseOrderRepositoryInterface;
 use App\Models\PurchaseOrder;
 use Illuminate\Validation\ValidationException;
@@ -25,6 +26,10 @@ final class TransitionPurchaseOrder
             $order->company, ['po.setujui'], 'po.diajukan',
             'PO #'.$order->id.' diajukan.', null, '/purchase-orders/'.$order->id, auth()->id(),
         );
+        ApprovalLedger::open(
+            $order->company, $order->branch_id, 'purchase_order', $order->id,
+            'po.approve', auth()->user(),
+        );
 
         return $dto;
     }
@@ -36,6 +41,9 @@ final class TransitionPurchaseOrder
         Notifier::toPermissioned(
             $order->company, ['po.setujui'], 'po.disetujui',
             'PO #'.$order->id.' disetujui.', null, '/purchase-orders/'.$order->id, auth()->id(),
+        );
+        ApprovalLedger::resolve(
+            $order->company, 'purchase_order', $order->id, 'po.approve', auth()->user(), true,
         );
 
         return $dto;
@@ -62,6 +70,9 @@ final class TransitionPurchaseOrder
 
         $dto = PurchaseOrderDTO::fromModel($this->orders->save($order));
         $this->trail($order, 'po.cancel', $from, 'dibatalkan');
+        ApprovalLedger::resolve(
+            $order->company, 'purchase_order', $order->id, 'po.approve', auth()->user(), false,
+        );
 
         return $dto;
     }

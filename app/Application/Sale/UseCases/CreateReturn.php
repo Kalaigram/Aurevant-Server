@@ -10,6 +10,7 @@ use App\Application\Notify\Notifier;
 use App\Application\Report\UseCases\RebuildDailySummary;
 use App\Application\Sale\DTOs\SaleReturnDTO;
 use App\Application\Stock\UseCases\RecordStockMovement;
+use App\Domain\Approval\Services\ApprovalLedger;
 use App\Domain\Sale\Repositories\SaleReturnRepositoryInterface;
 use App\Models\Branch;
 use App\Models\Company;
@@ -135,6 +136,10 @@ final class CreateReturn
             }
 
             ($this->ledgerPoster)->forReturn($sale, $retur);
+
+            ApprovalLedger::resolve(
+                $company, 'sale', $sale->id, 'sale.refund', auth()->user(), true, $reason,
+            );
 
             return SaleReturnDTO::fromModel($retur);
         });

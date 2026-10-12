@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\AccessRoleController;
 use App\Http\Controllers\Api\V1\AccountingPeriodController;
+use App\Http\Controllers\Api\V1\ApprovalController;
 use App\Http\Controllers\Api\V1\AssignmentController;
 use App\Http\Controllers\Api\V1\AttendanceController;
 use App\Http\Controllers\Api\V1\AuditLogController;
@@ -154,6 +155,11 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::get('/companies/{company}/accounting-periods', [AccountingPeriodController::class, 'index']);
         Route::post('/companies/{company}/accounting-periods/close', [AccountingPeriodController::class, 'close'])->middleware('permission:periode.tutup');
         Route::get('/companies/{company}/accounting-periods/{period}', [AccountingPeriodController::class, 'show']);
+        Route::get('/companies/{company}/approvals', [ApprovalController::class, 'index']);
+        Route::post('/companies/{company}/approvals', [ApprovalController::class, 'store']);
+        Route::get('/companies/{company}/approvals/{approval}', [ApprovalController::class, 'show']);
+        Route::post('/companies/{company}/approvals/{approval}/approve', [ApprovalController::class, 'approve']);
+        Route::post('/companies/{company}/approvals/{approval}/reject', [ApprovalController::class, 'reject']);
         Route::post('/companies/{company}/accounting-periods/{period}/reopen', [AccountingPeriodController::class, 'reopen'])->middleware('permission:periode.tutup');
         Route::get('/companies/{company}/expense-categories', [FinanceController::class, 'categories']);
         Route::post('/companies/{company}/expense-categories', [FinanceController::class, 'storeCategory'])->middleware('permission:biaya.setujui');

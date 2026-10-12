@@ -8,6 +8,7 @@ use App\Application\Ledger\LedgerPoster;
 use App\Application\Report\UseCases\RebuildDailySummary;
 use App\Application\Sale\DTOs\SaleDTO;
 use App\Application\Stock\UseCases\RecordStockMovement;
+use App\Domain\Approval\Services\ApprovalLedger;
 use App\Domain\Catalog\Repositories\ItemPriceRepositoryInterface;
 use App\Domain\Catalog\Repositories\ItemRepositoryInterface;
 use App\Domain\Sale\Repositories\CashShiftRepositoryInterface;
@@ -95,6 +96,12 @@ final class CreateSale
 
             ($this->rebuildSummary)($branch, now()->toDateString());
             ($this->ledgerPoster)->forSale($sale);
+
+            if ($computed['discountTotal'] > 0) {
+                ApprovalLedger::resolve(
+                    $company, null, null, 'sale.discount', auth()->user() ?? $cashier, true,
+                );
+            }
 
             return ['sale' => SaleDTO::fromModel($sale), 'duplicate' => false];
         });

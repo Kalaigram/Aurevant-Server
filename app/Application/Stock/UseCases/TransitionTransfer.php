@@ -7,6 +7,7 @@ namespace App\Application\Stock\UseCases;
 use App\Application\Audit\Audit;
 use App\Application\Notify\Notifier;
 use App\Application\Stock\DTOs\StockTransferDTO;
+use App\Domain\Approval\Services\ApprovalLedger;
 use App\Domain\Stock\Repositories\StockTransferRepositoryInterface;
 use App\Models\StockTransfer;
 use Illuminate\Validation\ValidationException;
@@ -25,6 +26,10 @@ final class TransitionTransfer
             $transfer->company, ['stok.transfer'], 'transfer.diajukan',
             'Transfer #'.$transfer->id.' diajukan.', null, '/transfers/'.$transfer->id, auth()->id(),
         );
+        ApprovalLedger::open(
+            $transfer->company, $transfer->from_branch_id, 'stock_transfer', $transfer->id,
+            'transfer.approve', auth()->user(),
+        );
 
         return $dto;
     }
@@ -36,6 +41,9 @@ final class TransitionTransfer
         Notifier::toPermissioned(
             $transfer->company, ['stok.transfer'], 'transfer.disetujui',
             'Transfer #'.$transfer->id.' disetujui.', null, '/transfers/'.$transfer->id, auth()->id(),
+        );
+        ApprovalLedger::resolve(
+            $transfer->company, 'stock_transfer', $transfer->id, 'transfer.approve', auth()->user(), true,
         );
 
         return $dto;
@@ -54,6 +62,9 @@ final class TransitionTransfer
 
         $dto = StockTransferDTO::fromModel($this->transfers->save($transfer));
         $this->trail($transfer, 'stock.transfer.cancel', $from, 'dibatalkan');
+        ApprovalLedger::resolve(
+            $transfer->company, 'stock_transfer', $transfer->id, 'transfer.approve', auth()->user(), false,
+        );
 
         return $dto;
     }
