@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CompanyController;
+use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\ItemController;
 use App\Http\Controllers\Api\V1\PurchaseOrderController;
 use App\Http\Controllers\Api\V1\SaleController;
@@ -79,6 +80,11 @@ Route::middleware('throttle:api')->prefix('v1')->group(function (): void {
         Route::post('/companies/{company}/branches/{branch}/sales/{sale}/void', [SaleController::class, 'void']);
         Route::get('/companies/{company}/branches/{branch}/returns', [SaleController::class, 'returns']);
         Route::post('/companies/{company}/branches/{branch}/sales/{sale}/returns', [SaleController::class, 'storeReturn']);
+        Route::get('/companies/{company}/customers', [CustomerController::class, 'index']);
+        Route::post('/companies/{company}/customers', [CustomerController::class, 'store']);
+        Route::get('/companies/{company}/customers/{customer}', [CustomerController::class, 'show']);
+        Route::put('/companies/{company}/customers/{customer}', [CustomerController::class, 'update']);
+        Route::delete('/companies/{company}/customers/{customer}', [CustomerController::class, 'destroy']);
     });
 });
 
