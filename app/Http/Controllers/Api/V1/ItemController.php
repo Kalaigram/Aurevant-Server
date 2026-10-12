@@ -114,6 +114,8 @@ class ItemController extends Controller
             'track_batch' => ['sometimes', 'boolean'],
             'track_serial' => ['sometimes', 'boolean'],
             'duration_minutes' => ['nullable', 'integer', 'min:1'],
+            'commission_type' => ['nullable', 'string', Rule::in(['persen', 'nominal'])],
+            'commission_value' => ['nullable', 'numeric', 'min:0'],
             'category_id' => ['nullable', 'integer'],
             'status' => ['sometimes', 'string', Rule::in(['aktif', 'nonaktif'])],
         ]);

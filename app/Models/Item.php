@@ -26,6 +26,8 @@ class Item extends Model
         'track_batch',
         'track_serial',
         'duration_minutes',
+        'commission_type',
+        'commission_value',
         'status',
     ];
 
@@ -36,6 +38,7 @@ class Item extends Model
             'has_variants' => 'boolean',
             'track_batch' => 'boolean',
             'track_serial' => 'boolean',
+            'commission_value' => 'decimal:2',
         ];
     }
 

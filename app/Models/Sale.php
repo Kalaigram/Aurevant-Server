@@ -18,6 +18,8 @@ class Sale extends Model
         'branch_id',
         'shift_id',
         'user_id',
+        'customer_id',
+        'service_order_id',
         'number',
         'idempotency_key',
         'status',
@@ -55,6 +57,16 @@ class Sale extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function serviceOrder(): BelongsTo
+    {
+        return $this->belongsTo(ServiceOrder::class, 'service_order_id');
     }
 
     public function items(): HasMany
