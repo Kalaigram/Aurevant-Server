@@ -14,7 +14,7 @@ final class StockLedger
 {
     public const TYPE_IN = ['pembelian', 'transfer_masuk'];
 
-    public const TYPE_OUT = ['penjualan', 'transfer_keluar'];
+    public const TYPE_OUT = ['penjualan', 'transfer_keluar', 'pemakaian_bahan'];
 
     public const TYPE_ADJUST = ['penyesuaian', 'opname'];
 

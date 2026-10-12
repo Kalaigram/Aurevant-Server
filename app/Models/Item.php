@@ -53,4 +53,9 @@ class Item extends Model
     {
         return $this->hasMany(ItemPrice::class);
     }
+
+    public function consumables(): HasMany
+    {
+        return $this->hasMany(ItemConsumable::class);
+    }
 }

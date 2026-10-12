@@ -11,18 +11,24 @@ use App\Domain\Purchase\Repositories\GoodsReceiptRepositoryInterface;
 use App\Domain\Purchase\Repositories\PurchaseOrderRepositoryInterface;
 use App\Domain\Purchase\Repositories\SupplierBillRepositoryInterface;
 use App\Domain\Purchase\Repositories\SupplierRepositoryInterface;
+use App\Domain\Sale\Repositories\CashShiftRepositoryInterface;
+use App\Domain\Sale\Repositories\SaleRepositoryInterface;
+use App\Domain\Sale\Repositories\SaleSequenceRepositoryInterface;
 use App\Domain\Stock\Repositories\StockBalanceRepositoryInterface;
 use App\Domain\Stock\Repositories\StockMovementRepositoryInterface;
 use App\Domain\Stock\Repositories\StockOpnameRepositoryInterface;
 use App\Domain\Stock\Repositories\StockTransferRepositoryInterface;
 use App\Domain\User\Repositories\UserRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\BranchEloquentRepository;
+use App\Infrastructure\Persistence\Eloquent\CashShiftEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\CategoryEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\CompanyEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\GoodsReceiptEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\ItemEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\ItemPriceEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\PurchaseOrderEloquentRepository;
+use App\Infrastructure\Persistence\Eloquent\SaleEloquentRepository;
+use App\Infrastructure\Persistence\Eloquent\SaleSequenceEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\StockBalanceEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\StockMovementEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\StockOpnameEloquentRepository;
@@ -56,6 +62,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(PurchaseOrderRepositoryInterface::class, PurchaseOrderEloquentRepository::class);
         $this->app->bind(GoodsReceiptRepositoryInterface::class, GoodsReceiptEloquentRepository::class);
         $this->app->bind(SupplierBillRepositoryInterface::class, SupplierBillEloquentRepository::class);
+        $this->app->bind(CashShiftRepositoryInterface::class, CashShiftEloquentRepository::class);
+        $this->app->bind(SaleRepositoryInterface::class, SaleEloquentRepository::class);
+        $this->app->bind(SaleSequenceRepositoryInterface::class, SaleSequenceEloquentRepository::class);
     }
 
     /**
