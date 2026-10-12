@@ -74,6 +74,7 @@ final class CalculatePayroll
                     $absent,
                     $period->divisor,
                     (float) $commission,
+                    $user->ptkp_status ?? 'TK/0',
                 );
 
                 $this->payrolls->replaceAutoLines($period, $user, $lines);

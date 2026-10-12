@@ -81,8 +81,35 @@ class SalaryCalculatorTest extends TestCase
 
         // BPJS = 4% x 5.000.000 = 200.000
         $this->assertEquals(-200000.0, $byLabel['BPJS karyawan (1% Kes + 2% JHT + 1% JP)']);
-        // PPh = 5% x (6.000.000 - 200.000) = 290.000
-        $this->assertEquals(-290000.0, $byLabel['PPh 21 (5% sederhana)']);
-        $this->assertEquals(5000000 + 1000000 - 200000 - 290000, array_sum(array_column($lines, 'amount')));
+        // PPh annualisasi: (6.000.000-200.000)x12=69.600.000 - jabatan 3.480.000
+        // - PTKP 54.000.000 = PKP 12.120.000 x 5% = 606.000 / 12 = 50.500
+        $this->assertEquals(-50500.0, $byLabel['PPh 21 (annualisasi)']);
+        $this->assertEquals(6000000 - 200000 - 50500, array_sum(array_column($lines, 'amount')));
+    }
+
+    public function test_pph21_progresif_lapis_ketiga(): void
+    {
+        $calc = new SalaryCalculator;
+
+        $lines = $calc->calculate(
+            [
+                ['id' => 1, 'name' => 'Gaji pokok', 'calc_type' => 'monthly_fixed', 'deductible' => false, 'amount' => 30000000, 'taxable' => true, 'bpjs_base' => true],
+            ],
+            25,
+            0,
+            25,
+            0.0,
+            'TK/0',
+        );
+
+        $byLabel = [];
+        foreach ($lines as $line) {
+            $byLabel[$line['label']] = $line['amount'];
+        }
+
+        // BPJS 1.200.000; kena 28.800.000/bln -> PKP 285.600.000
+        // 5%x60jt + 15%x190jt + 25%x35,6jt = 40.400.000 / 12
+        $this->assertEquals(-1200000.0, $byLabel['BPJS karyawan (1% Kes + 2% JHT + 1% JP)']);
+        $this->assertEquals(-3366666.67, $byLabel['PPh 21 (annualisasi)']);
     }
 }

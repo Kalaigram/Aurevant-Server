@@ -17,6 +17,7 @@ final class SalaryCalculator
         int $absentDeductibleDays,
         int $divisor,
         float $commissionTotal,
+        string $ptkpStatus = 'TK/0',
     ): array {
         $lines = [];
         $bpjsBase = 0.0;
@@ -71,12 +72,12 @@ final class SalaryCalculator
             ];
         }
 
-        // PPh 21 sederhana: 5% dari (dasar kena pajak - BPJS). Annualisasi + PTKP menyusul.
+        // PPh 21 annualisasi: (dasar kena pajak - BPJS) disetahunkan, PTKP, progresif, /12.
         if ($hasTaxable) {
-            $pph = round(max(0.0, $taxBase - $bpjs) * 0.05, 2);
+            $pph = PtkpTable::monthlyTax($taxBase - $bpjs, $ptkpStatus);
             if ($pph > 0) {
                 $lines[] = [
-                    'label' => 'PPh 21 (5% sederhana)',
+                    'label' => 'PPh 21 (annualisasi)',
                     'amount' => -$pph,
                     'component_id' => null,
                 ];

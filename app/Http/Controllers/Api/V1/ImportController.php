@@ -23,7 +23,7 @@ class ImportController extends Controller
             'items' => ['code', 'name', 'type', 'unit', 'category', 'branch_code', 'price'],
             'stock' => ['item_code', 'branch_code', 'qty', 'unit_cost'],
             'suppliers' => ['name', 'phone', 'address'],
-            'employees' => ['name', 'email', 'phone', 'branch_code', 'role', 'password'],
+            'employees' => ['name', 'email', 'phone', 'branch_code', 'role', 'password', 'ptkp_status'],
             default => abort(404),
         };
 

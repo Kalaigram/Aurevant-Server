@@ -12,6 +12,7 @@ use App\Domain\Branch\Repositories\BranchRepositoryInterface;
 use App\Domain\Catalog\Repositories\CategoryRepositoryInterface;
 use App\Domain\Catalog\Repositories\ItemPriceRepositoryInterface;
 use App\Domain\Catalog\Repositories\ItemRepositoryInterface;
+use App\Domain\Payroll\Services\PtkpTable;
 use App\Domain\Purchase\Repositories\SupplierRepositoryInterface;
 use App\Domain\User\Repositories\UserRepositoryInterface;
 use App\Models\Company;
@@ -263,6 +264,11 @@ final class ImportFile
                 $rowErrors[] = 'password minimal 8 karakter.';
             }
 
+            $ptkp = strtoupper(trim((string) ($row['ptkp_status'] ?? '')));
+            if ($ptkp !== '' && ! in_array($ptkp, PtkpTable::statuses(), true)) {
+                $rowErrors[] = 'ptkp_status tidak dikenal.';
+            }
+
             if ($rowErrors !== []) {
                 $errors[] = ['row' => $line, 'errors' => $rowErrors];
             }
@@ -281,6 +287,7 @@ final class ImportFile
             'email' => strtolower(trim((string) $row['email'])),
             'phone' => trim((string) ($row['phone'] ?? '')) ?: null,
             'password' => Hash::make($password !== '' ? $password : Str::random(16)),
+            'ptkp_status' => strtoupper(trim((string) ($row['ptkp_status'] ?? ''))) ?: 'TK/0',
         ]);
 
         $branchId = null;
