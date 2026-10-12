@@ -19,7 +19,7 @@ use Illuminate\Validation\ValidationException;
 
 final class CreateSale
 {
-    private const PAYMENT_METHODS = ['tunai', 'transfer', 'qris', 'ewallet'];
+    private const PAYMENT_METHODS = ['tunai', 'transfer', 'qris', 'ewallet', 'dp'];
 
     public function __construct(
         private SaleRepositoryInterface $sales,
@@ -42,6 +42,8 @@ final class CreateSale
         array $lines,
         array $payments,
         ?string $idempotencyKey,
+        ?int $customerId = null,
+        ?int $serviceOrderId = null,
     ): array {
         $shift = $this->shifts->findOpenForBranch($branch);
         if ($shift === null) {
@@ -59,7 +61,7 @@ final class CreateSale
 
         $this->validatePayments($payments);
 
-        return DB::transaction(function () use ($company, $branch, $cashier, $shift, $lines, $payments, $idempotencyKey) {
+        return DB::transaction(function () use ($company, $branch, $cashier, $shift, $lines, $payments, $idempotencyKey, $customerId, $serviceOrderId) {
             $number = $this->nextNumber($branch);
             $computed = $this->computeLines($company, $branch, $lines);
             $this->guardPaymentsTotal($computed['grandTotal'], $payments);
@@ -76,6 +78,8 @@ final class CreateSale
                 'branch_id' => $branch->id,
                 'shift_id' => $shift->id,
                 'user_id' => $cashier->id,
+                'customer_id' => $customerId,
+                'service_order_id' => $serviceOrderId,
                 'number' => $number,
                 'idempotency_key' => $idempotencyKey,
                 'status' => 'lunas',

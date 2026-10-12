@@ -50,7 +50,7 @@ class SaleController extends Controller
             'items.*.discount_amount' => ['nullable', 'numeric', 'min:0'],
             'items.*.tax_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'payments' => ['required', 'array', 'min:1'],
-            'payments.*.method' => ['required', 'string', Rule::in(['tunai', 'transfer', 'qris', 'ewallet'])],
+            'payments.*.method' => ['required', 'string', Rule::in(['tunai', 'transfer', 'qris', 'ewallet', 'dp'])],
             'payments.*.amount' => ['required', 'numeric', 'gt:0'],
             'payments.*.tendered' => ['nullable', 'numeric', 'min:0'],
             'payments.*.reference' => ['nullable', 'string', 'max:100'],

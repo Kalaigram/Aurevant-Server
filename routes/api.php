@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\ItemController;
 use App\Http\Controllers\Api\V1\PurchaseOrderController;
 use App\Http\Controllers\Api\V1\SaleController;
+use App\Http\Controllers\Api\V1\ServiceOrderController;
 use App\Http\Controllers\Api\V1\ShiftController;
 use App\Http\Controllers\Api\V1\StockController;
 use App\Http\Controllers\Api\V1\StockOpnameController;
@@ -85,6 +86,14 @@ Route::middleware('throttle:api')->prefix('v1')->group(function (): void {
         Route::get('/companies/{company}/customers/{customer}', [CustomerController::class, 'show']);
         Route::put('/companies/{company}/customers/{customer}', [CustomerController::class, 'update']);
         Route::delete('/companies/{company}/customers/{customer}', [CustomerController::class, 'destroy']);
+        Route::get('/companies/{company}/branches/{branch}/service-orders', [ServiceOrderController::class, 'index']);
+        Route::post('/companies/{company}/branches/{branch}/service-orders', [ServiceOrderController::class, 'store']);
+        Route::get('/companies/{company}/branches/{branch}/service-orders/{order}', [ServiceOrderController::class, 'show']);
+        Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/deposit', [ServiceOrderController::class, 'deposit']);
+        Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/process', [ServiceOrderController::class, 'process']);
+        Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/complete', [ServiceOrderController::class, 'complete']);
+        Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/pay', [ServiceOrderController::class, 'pay']);
+        Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/cancel', [ServiceOrderController::class, 'cancel']);
     });
 });
 
