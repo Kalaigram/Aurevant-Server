@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use App\Application\Audit\Listeners\PersistAudit;
 use App\Domain\Access\Repositories\AssignmentRepositoryInterface;
 use App\Domain\Access\Repositories\RoleRepositoryInterface;
+use App\Domain\Audit\Events\AuditTrail;
+use App\Domain\Audit\Repositories\AuditLogRepositoryInterface;
 use App\Domain\Branch\Repositories\BranchRepositoryInterface;
 use App\Domain\Catalog\Repositories\CategoryRepositoryInterface;
 use App\Domain\Catalog\Repositories\ItemPriceRepositoryInterface;
@@ -25,6 +28,7 @@ use App\Domain\Stock\Repositories\StockOpnameRepositoryInterface;
 use App\Domain\Stock\Repositories\StockTransferRepositoryInterface;
 use App\Domain\User\Repositories\UserRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\AssignmentEloquentRepository;
+use App\Infrastructure\Persistence\Eloquent\AuditLogEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\BranchEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\CashShiftEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\CategoryEloquentRepository;
@@ -48,6 +52,7 @@ use App\Infrastructure\Persistence\Eloquent\SupplierEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\UserEloquentRepository;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -80,6 +85,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(SaleSequenceRepositoryInterface::class, SaleSequenceEloquentRepository::class);
         $this->app->bind(CustomerRepositoryInterface::class, CustomerEloquentRepository::class);
         $this->app->bind(ServiceOrderRepositoryInterface::class, ServiceOrderEloquentRepository::class);
+        $this->app->bind(AuditLogRepositoryInterface::class, AuditLogEloquentRepository::class);
     }
 
     /**
@@ -87,6 +93,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Event::listen(AuditTrail::class, PersistAudit::class);
+
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
