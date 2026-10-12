@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Stock\Exceptions\InsufficientStockException;
+use App\Http\Middleware\RequireBranchScope;
 use App\Http\Middleware\SetCompanyTeam;
 use App\Shared\Responses\ApiResponse;
 use Illuminate\Auth\AuthenticationException;
@@ -25,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'company.team' => SetCompanyTeam::class,
+            'scope.cabang' => RequireBranchScope::class,
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
