@@ -46,4 +46,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(EmployeeAssignment::class);
     }
+
+    public function employeeSalaries(): HasMany
+    {
+        return $this->hasMany(EmployeeSalary::class);
+    }
+
+    public function attendances(): HasMany
+    {
+        return $this->hasMany(Attendance::class);
+    }
 }

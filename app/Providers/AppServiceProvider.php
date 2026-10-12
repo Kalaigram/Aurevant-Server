@@ -16,6 +16,8 @@ use App\Domain\Catalog\Repositories\ItemPriceRepositoryInterface;
 use App\Domain\Catalog\Repositories\ItemRepositoryInterface;
 use App\Domain\Company\Repositories\CompanyRepositoryInterface;
 use App\Domain\Leave\Repositories\LeaveRepositoryInterface;
+use App\Domain\Payroll\Repositories\PayrollRepositoryInterface;
+use App\Domain\Payroll\Repositories\SalaryRepositoryInterface;
 use App\Domain\Purchase\Repositories\GoodsReceiptRepositoryInterface;
 use App\Domain\Purchase\Repositories\PurchaseOrderRepositoryInterface;
 use App\Domain\Purchase\Repositories\SupplierBillRepositoryInterface;
@@ -47,8 +49,10 @@ use App\Infrastructure\Persistence\Eloquent\GoodsReceiptEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\ItemEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\ItemPriceEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\LeaveEloquentRepository;
+use App\Infrastructure\Persistence\Eloquent\PayrollEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\PurchaseOrderEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\RoleEloquentRepository;
+use App\Infrastructure\Persistence\Eloquent\SalaryEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\SaleEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\SaleReturnEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\SalesAggregateEloquentRepository;
@@ -107,6 +111,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(SalesAggregateRepositoryInterface::class, SalesAggregateEloquentRepository::class);
         $this->app->bind(SummaryRepositoryInterface::class, SummaryEloquentRepository::class);
         $this->app->bind(LeaveRepositoryInterface::class, LeaveEloquentRepository::class);
+        $this->app->bind(SalaryRepositoryInterface::class, SalaryEloquentRepository::class);
+        $this->app->bind(PayrollRepositoryInterface::class, PayrollEloquentRepository::class);
     }
 
     /**
