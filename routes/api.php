@@ -110,8 +110,8 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::post('/companies/{company}/branches/{branch}/service-orders', [ServiceOrderController::class, 'store'])->middleware('permission:transaksi.buat');
         Route::get('/companies/{company}/branches/{branch}/service-orders/{order}', [ServiceOrderController::class, 'show']);
         Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/deposit', [ServiceOrderController::class, 'deposit'])->middleware('permission:transaksi.buat');
-        Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/process', [ServiceOrderController::class, 'process'])->middleware('permission:transaksi.buat');
-        Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/complete', [ServiceOrderController::class, 'complete'])->middleware('permission:transaksi.buat');
+        Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/process', [ServiceOrderController::class, 'process'])->middleware('permission:jasa.proses');
+        Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/complete', [ServiceOrderController::class, 'complete'])->middleware('permission:jasa.proses');
         Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/pay', [ServiceOrderController::class, 'pay'])->middleware('permission:transaksi.buat');
         Route::post('/companies/{company}/branches/{branch}/service-orders/{order}/cancel', [ServiceOrderController::class, 'cancel'])->middleware('permission:transaksi.buat');
         Route::get('/companies/{company}/branches/{branch}/attendance-qr', [AttendanceController::class, 'qr']);

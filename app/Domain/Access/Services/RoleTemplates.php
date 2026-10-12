@@ -21,7 +21,7 @@ final class RoleTemplates
             ],
             'Kasir' => ['transaksi.buat', 'nota.lihat', 'shift.buka', 'shift.tutup', 'pelanggan.lihat'],
             'Staf Gudang' => ['stok.transfer', 'stok.opname', 'po.buat', 'nota.lihat'],
-            'Pelaksana Jasa' => ['nota.lihat', 'jadwal.lihat', 'gaji.lihat_sendiri'],
+            'Pelaksana Jasa' => ['nota.lihat', 'jadwal.lihat', 'jasa.proses', 'gaji.lihat_sendiri'],
             'Admin Keuangan' => [
                 'keuangan.lihat', 'biaya.input', 'biaya.setujui', 'periode.tutup', 'laporan.konsolidasi',
                 'gaji.kelola', 'nota.lihat', 'dashboard.konsolidasi',

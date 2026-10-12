@@ -12,6 +12,7 @@ final class PermissionCatalog
     {
         return [
             'transaksi.buat', 'transaksi.diskon', 'transaksi.void',
+            'jasa.proses',
             'retur.buat', 'retur.setujui', 'nota.lihat', 'shift.buka', 'shift.tutup',
             'stok.transfer', 'stok.opname', 'po.buat', 'po.setujui',
             'keuangan.lihat', 'biaya.input', 'biaya.setujui', 'periode.tutup', 'laporan.konsolidasi',
