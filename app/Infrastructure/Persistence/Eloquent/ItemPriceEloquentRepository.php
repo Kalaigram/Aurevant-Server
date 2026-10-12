@@ -18,4 +18,12 @@ final class ItemPriceEloquentRepository implements ItemPriceRepositoryInterface
             ['price' => $price]
         );
     }
+
+    public function findForItemBranch(int $itemId, int $branchId): ?ItemPrice
+    {
+        return ItemPrice::query()
+            ->where('item_id', $itemId)
+            ->where('branch_id', $branchId)
+            ->first();
+    }
 }

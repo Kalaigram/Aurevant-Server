@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CompanyController;
 use App\Http\Controllers\Api\V1\ItemController;
 use App\Http\Controllers\Api\V1\PurchaseOrderController;
+use App\Http\Controllers\Api\V1\SaleController;
 use App\Http\Controllers\Api\V1\ShiftController;
 use App\Http\Controllers\Api\V1\StockController;
 use App\Http\Controllers\Api\V1\StockOpnameController;
@@ -72,6 +73,9 @@ Route::middleware('throttle:api')->prefix('v1')->group(function (): void {
         Route::post('/companies/{company}/branches/{branch}/shifts', [ShiftController::class, 'open']);
         Route::get('/companies/{company}/branches/{branch}/shifts/{shift}', [ShiftController::class, 'show']);
         Route::post('/companies/{company}/branches/{branch}/shifts/{shift}/close', [ShiftController::class, 'close']);
+        Route::get('/companies/{company}/branches/{branch}/sales', [SaleController::class, 'index']);
+        Route::post('/companies/{company}/branches/{branch}/sales', [SaleController::class, 'store']);
+        Route::get('/companies/{company}/branches/{branch}/sales/{sale}', [SaleController::class, 'show']);
     });
 });
 

@@ -11,4 +11,6 @@ use App\Models\ItemPrice;
 interface ItemPriceRepositoryInterface
 {
     public function upsert(Item $item, Branch $branch, string $price): ItemPrice;
+
+    public function findForItemBranch(int $itemId, int $branchId): ?ItemPrice;
 }
