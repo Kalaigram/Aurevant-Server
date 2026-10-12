@@ -75,6 +75,7 @@ final class DemoSeeder extends Seeder
         $branches = $this->branches($bengkel, $toko);
         $users = $this->users();
         $this->roles($bengkel, $users);
+        $this->secondCompanyAccess($toko, $users);
         $categories = $this->categories($bengkel);
         $items = $this->items($bengkel, $categories);
         $this->prices($branches, $items);
@@ -194,6 +195,34 @@ final class DemoSeeder extends Seeder
         if ($kasirRole !== null) {
             $users['kasir2']->assignRole($kasirRole);
         }
+    }
+
+    /**
+     * Buka akses perusahaan kedua untuk sebagian user agar dua-duanya bisa diklik.
+     *
+     * @param  array<string, User>  $users
+     */
+    private function secondCompanyAccess(Company $company, array $users): void
+    {
+        setPermissionsTeamId($company->id);
+
+        foreach (['Pemilik' => 'pemilik', 'Kasir' => 'kasir'] as $name => $key) {
+            $role = Role::firstOrCreate(
+                ['name' => $name, 'guard_name' => 'web', 'company_id' => $company->id]
+            );
+            $role->syncPermissions(RoleTemplates::permissionsFor($name, PermissionCatalog::all()));
+            $users[$key]->assignRole($role);
+        }
+
+        $toko = Branch::query()->where('company_id', $company->id)->orderBy('id')->first();
+        EmployeeAssignment::firstOrCreate(
+            ['user_id' => $users['pemilik']->id, 'company_id' => $company->id, 'ended_at' => null],
+            ['branch_id' => null, 'started_at' => now()->subMonth()->toDateString()]
+        );
+        EmployeeAssignment::firstOrCreate(
+            ['user_id' => $users['kasir']->id, 'company_id' => $company->id, 'ended_at' => null],
+            ['branch_id' => $toko?->id, 'started_at' => now()->subMonth()->toDateString()]
+        );
     }
 
     /** @return list<Category> */
