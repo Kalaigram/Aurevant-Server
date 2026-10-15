@@ -68,7 +68,7 @@ class AccessTest extends TestCase
             'name' => 'Kasir', 'template' => 'Kasir',
         ])->assertCreated()->json('data');
         $this->assertEqualsCanonicalizing(
-            ['transaksi.buat', 'nota.lihat', 'shift.buka', 'shift.tutup', 'pelanggan.lihat'],
+            ['transaksi.buat', 'nota.lihat', 'shift.buka', 'shift.tutup', 'pelanggan.lihat', 'gaji.lihat_sendiri'],
             $kasir['permissions']
         );
 

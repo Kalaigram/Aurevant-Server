@@ -198,8 +198,9 @@ class AttendanceTest extends TestCase
     public function test_terlambat_dan_tanpa_jadwal(): void
     {
         [$owner, $staff, $company, $branch] = $this->setupWorld();
-        $start = now()->subHours(2)->format('H:i');
-        $end = now()->addHours(6)->format('H:i');
+        $wib = now()->setTimezone($branch->refresh()->timezone ?? 'Asia/Jakarta');
+        $start = $wib->copy()->subHours(2)->format('H:i');
+        $end = $wib->copy()->addHours(6)->format('H:i');
         $this->shiftFor($owner, $company, $start, $end);
         $shiftId = WorkShift::firstOrFail()->id;
         $this->patternAllWeek($owner, $company, $staff, $shiftId);

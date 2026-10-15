@@ -16,12 +16,12 @@ final class PermissionCatalog
             'retur.buat', 'retur.setujui', 'nota.lihat', 'shift.buka', 'shift.tutup',
             'stok.transfer', 'stok.opname', 'po.buat', 'po.setujui',
             'keuangan.lihat', 'biaya.input', 'biaya.setujui', 'periode.tutup', 'laporan.konsolidasi',
-            'jadwal.lihat', 'jadwal.atur', 'shift.kelola', 'absensi.koreksi', 'absensi.approve',
+            'jadwal.lihat', 'shift.kelola', 'absensi.koreksi', 'absensi.approve',
             'gaji.lihat_sendiri', 'gaji.kelola', 'gaji.setujui',
             'katalog.kelola', 'harga.atur', 'cabang.kelola', 'karyawan.kelola',
             'audit.lihat', 'dashboard.konsolidasi',
             'pelanggan.lihat', 'pelanggan.kelola', 'pelanggan.ekspor',
-            'impor.jalankan', 'pengaturan.kelola', 'langganan.kelola',
+            'impor.jalankan', 'pengaturan.kelola',
         ];
     }
 }

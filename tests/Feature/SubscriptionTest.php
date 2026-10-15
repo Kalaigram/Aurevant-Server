@@ -53,7 +53,7 @@ class SubscriptionTest extends TestCase
         $api()->postJson("/api/v1/companies/{$company->id}/branches", [
             'code' => 'X', 'name' => 'X',
         ])->assertForbidden()->assertJson([
-            'status' => 'error', 'message' => 'Langganan tidak aktif.', 'data' => null,
+            'status' => 'error', 'message' => 'Perusahaan atau langganan tidak aktif.', 'data' => null,
         ]);
 
         // baca tetap boleh

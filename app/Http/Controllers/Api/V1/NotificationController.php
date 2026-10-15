@@ -102,4 +102,9 @@ class NotificationController extends Controller
 
         return ApiResponse::success(null, 'Token perangkat dihapus.');
     }
+
+    public function tokens(Request $request, ManageDeviceTokens $useCase): JsonResponse
+    {
+        return ApiResponse::success($useCase->tokensFor($request->user()), 'Perangkat terdaftar.');
+    }
 }

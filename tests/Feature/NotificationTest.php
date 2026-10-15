@@ -139,4 +139,17 @@ class NotificationTest extends TestCase
         $api()->getJson('/api/v1/notifications')->assertOk()->assertJsonPath('meta.total', 0);
         $api()->postJson('/api/v1/notifications/read-all')->assertOk()->assertJsonPath('data.read', 0);
     }
+
+    public function test_daftar_perangkat_milik_sendiri(): void
+    {
+        [$owner] = $this->setupWorld();
+        $api = fn () => $this->actingAs($owner, 'sanctum');
+
+        $this->getJson('/api/v1/device-tokens')->assertUnauthorized();
+
+        $api()->postJson('/api/v1/device-tokens', ['token' => 'hp-utama', 'platform' => 'android'])->assertOk();
+        $api()->getJson('/api/v1/device-tokens')->assertOk()
+            ->assertJsonPath('data.0.token', 'hp-utama')
+            ->assertJsonPath('data.0.platform', 'android');
+    }
 }

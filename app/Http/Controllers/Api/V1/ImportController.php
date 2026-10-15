@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Application\Import\UseCases\ExportCustomers;
 use App\Application\Import\UseCases\ExportItems;
 use App\Application\Import\UseCases\ImportFile;
 use App\Http\Controllers\Controller;
@@ -86,5 +87,19 @@ class ImportController extends Controller
             }
             fclose($out);
         }, 'items.csv', ['Content-Type' => 'text/csv']);
+    }
+
+    public function exportCustomers(Company $company, ExportCustomers $useCase): StreamedResponse
+    {
+        $rows = $useCase($company);
+
+        return response()->streamDownload(function () use ($rows): void {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['name', 'phone', 'address']);
+            foreach ($rows as $row) {
+                fputcsv($out, $row);
+            }
+            fclose($out);
+        }, 'customers.csv', ['Content-Type' => 'text/csv']);
     }
 }

@@ -53,4 +53,24 @@ class CustomerTest extends TestCase
         $api()->deleteJson("/api/v1/companies/{$a->id}/customers/{$id}")->assertOk();
         $this->assertSoftDeleted('customers', ['id' => $id]);
     }
+
+    public function test_ekspor_pelanggan_csv_dijaga_izin(): void
+    {
+        $user = User::factory()->create();
+        $a = Company::create(['name' => 'A', 'slug' => 'a', 'status' => 'aktif']);
+        $this->owner($user, $a);
+        Customer::create(['company_id' => $a->id, 'name' => 'Andi', 'phone' => '08111', 'address' => 'Jl. Mawar']);
+        $url = "/api/v1/companies/{$a->id}/exports/customers";
+
+        $this->getJson($url)->assertUnauthorized();
+
+        $tanpaIzin = User::factory()->create();
+        $this->actingAs($tanpaIzin, 'sanctum')->getJson($url)->assertForbidden();
+
+        $res = $this->actingAs($user, 'sanctum')->get($url)->assertOk();
+        $this->assertStringContainsString('text/csv', $res->headers->get('Content-Type'));
+        $isi = $res->streamedContent();
+        $this->assertStringContainsString('name,phone,address', $isi);
+        $this->assertStringContainsString('Andi', $isi);
+    }
 }

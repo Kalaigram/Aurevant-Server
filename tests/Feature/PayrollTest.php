@@ -14,6 +14,8 @@ use App\Models\SalaryComponent;
 use App\Models\ServiceOrder;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Tests\Concerns\WithPermissions;
 use Tests\TestCase;
 
@@ -153,9 +155,18 @@ class PayrollTest extends TestCase
             'name' => 'Oktober 2026', 'date_from' => '2026-10-01', 'date_to' => '2026-10-31',
         ])->assertCreated()->json('data.id');
 
-        // staff lihat slip sendiri: boleh tanpa izin khusus
+        // staff tanpa izin apa pun: slip sendiri pun ditolak
         $this->actingAs($staff, 'sanctum')->getJson("{$base}/payroll-periods/{$periodId}/users/{$staff->id}/slip")
+            ->assertForbidden();
+
+        // staff dengan gaji.lihat_sendiri: slip sendiri boleh
+        $this->beriIzin($staff, $company, ['gaji.lihat_sendiri']);
+        $this->actingAs($staff->fresh(), 'sanctum')->getJson("{$base}/payroll-periods/{$periodId}/users/{$staff->id}/slip")
             ->assertOk();
+
+        // slip orang lain: tetap tolak
+        $this->actingAs($staff->fresh(), 'sanctum')->getJson("{$base}/payroll-periods/{$periodId}/users/{$owner->id}/slip")
+            ->assertForbidden();
 
         // orang lain intip: tolak
         $this->actingAs($manajer, 'sanctum')->getJson("{$base}/payroll-periods/{$periodId}/users/{$staff->id}/slip")
@@ -168,5 +179,19 @@ class PayrollTest extends TestCase
         // tanpa izin kelola: daftar periode ditolak
         $this->actingAs($manajer, 'sanctum')->getJson("{$base}/payroll-periods")
             ->assertForbidden();
+    }
+
+    /** @param list<string> $perms */
+    private function beriIzin(User $user, Company $company, array $perms): void
+    {
+        setPermissionsTeamId($company->id);
+        foreach ($perms as $name) {
+            Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
+        }
+        $role = Role::firstOrCreate(
+            ['name' => 'Terbatas', 'guard_name' => 'web', 'company_id' => $company->id],
+        );
+        $role->syncPermissions($perms);
+        $user->assignRole($role);
     }
 }

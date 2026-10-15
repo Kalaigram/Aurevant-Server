@@ -8,6 +8,7 @@ use App\Application\Sale\DTOs\SaleDTO;
 use App\Application\Sale\DTOs\SaleReturnDTO;
 use App\Application\Sale\UseCases\CreateReturn;
 use App\Application\Sale\UseCases\CreateSale;
+use App\Application\Sale\UseCases\PrintReceipt;
 use App\Application\Sale\UseCases\VoidSale;
 use App\Domain\Branch\Repositories\BranchRepositoryInterface;
 use App\Domain\Sale\Repositories\SaleRepositoryInterface;
@@ -16,9 +17,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\Company;
 use App\Shared\Responses\ApiResponse;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SaleController extends Controller
 {
@@ -78,6 +81,20 @@ class SaleController extends Controller
         $found = $sales->findForBranch($scopedBranch, $sale) ?? abort(404);
 
         return ApiResponse::success(SaleDTO::fromModel($found), 'Detail nota.');
+    }
+
+    public function receipt(Company $company, int $branch, int $sale, BranchRepositoryInterface $branches, SaleRepositoryInterface $sales, PrintReceipt $useCase): StreamedResponse
+    {
+        $scopedBranch = $this->scopedBranch($company, $branch, $branches);
+        $found = $sales->findForBranch($scopedBranch, $sale) ?? abort(404);
+
+        $pdf = Pdf::loadView('receipts.sale', $useCase($company, $scopedBranch, $found));
+
+        return response()->streamDownload(
+            fn () => print ($pdf->output()),
+            "struk-{$found->number}.pdf",
+            ['Content-Type' => 'application/pdf'],
+        );
     }
 
     public function void(Request $request, Company $company, int $branch, int $sale, BranchRepositoryInterface $branches, SaleRepositoryInterface $sales, VoidSale $useCase): JsonResponse

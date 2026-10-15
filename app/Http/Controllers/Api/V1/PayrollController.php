@@ -159,7 +159,9 @@ class PayrollController extends Controller
 
     public function slip(Request $request, Company $company, int $period, User $user, Payslip $useCase): JsonResponse
     {
-        if ($request->user()->id !== $user->id && ! $request->user()->can('gaji.kelola')) {
+        $me = $request->user();
+        $own = $me->id === $user->id && $me->can('gaji.lihat_sendiri');
+        if (! $own && ! $me->can('gaji.kelola')) {
             abort(403, 'Akses ditolak.');
         }
 

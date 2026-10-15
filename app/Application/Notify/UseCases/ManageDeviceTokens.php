@@ -24,4 +24,15 @@ final class ManageDeviceTokens
             ->where('token', $token)
             ->delete();
     }
+
+    /** @return list<array{token: string, platform: ?string}> */
+    public function tokensFor(User $user): array
+    {
+        return UserDeviceToken::query()
+            ->where('user_id', $user->id)
+            ->orderByDesc('id')
+            ->get(['token', 'platform'])
+            ->map(fn ($row) => ['token' => (string) $row->token, 'platform' => $row->platform])
+            ->all();
+    }
 }

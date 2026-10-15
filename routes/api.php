@@ -34,7 +34,6 @@ use App\Http\Controllers\Api\V1\SubscriptionController;
 use App\Http\Controllers\Api\V1\SubscriptionInvoiceController;
 use App\Http\Controllers\Api\V1\SupplierController;
 use App\Http\Controllers\Api\V1\TenantController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(function (): void {
@@ -99,6 +98,7 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::get('/companies/{company}/branches/{branch}/sales', [SaleController::class, 'index']);
         Route::post('/companies/{company}/branches/{branch}/sales', [SaleController::class, 'store'])->middleware('permission:transaksi.buat');
         Route::get('/companies/{company}/branches/{branch}/sales/{sale}', [SaleController::class, 'show']);
+        Route::get('/companies/{company}/branches/{branch}/sales/{sale}/receipt', [SaleController::class, 'receipt'])->middleware('permission:nota.lihat');
         Route::post('/companies/{company}/branches/{branch}/sales/{sale}/void', [SaleController::class, 'void'])->middleware('permission:transaksi.void');
         Route::get('/companies/{company}/branches/{branch}/returns', [SaleController::class, 'returns']);
         Route::post('/companies/{company}/branches/{branch}/sales/{sale}/returns', [SaleController::class, 'storeReturn'])->middleware('permission:retur.buat');
@@ -125,6 +125,7 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::get('/companies/{company}/imports/template/{type}', [ImportController::class, 'template'])->middleware('permission:impor.jalankan');
         Route::post('/companies/{company}/imports/{type}', [ImportController::class, 'import'])->middleware('permission:impor.jalankan');
         Route::get('/companies/{company}/exports/items', [ImportController::class, 'exportItems'])->middleware('permission:impor.jalankan');
+        Route::get('/companies/{company}/exports/customers', [ImportController::class, 'exportCustomers'])->middleware('permission:pelanggan.ekspor');
         Route::get('/notifications', [NotificationController::class, 'index']);
         Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
         Route::post('/notifications/{notification}/read', [NotificationController::class, 'read']);
@@ -132,6 +133,7 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::get('/notification-preferences', [NotificationController::class, 'preferences']);
         Route::put('/notification-preferences', [NotificationController::class, 'setPreference']);
         Route::post('/device-tokens', [NotificationController::class, 'registerToken']);
+        Route::get('/device-tokens', [NotificationController::class, 'tokens']);
         Route::delete('/device-tokens', [NotificationController::class, 'removeToken']);
         Route::get('/plans', [PlanController::class, 'index']);
         Route::post('/plans', [PlanController::class, 'store'])->middleware('super.admin');
@@ -178,7 +180,6 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::post('/companies/{company}/receivables', [DebtController::class, 'storeReceivable'])->middleware('permission:biaya.setujui');
         Route::post('/companies/{company}/receivables/{receivable}/pay', [DebtController::class, 'payReceivable'])->middleware('permission:biaya.setujui');
         Route::get('/companies/{company}/receivables-aging', [DebtController::class, 'receivableAging']);
-        Route::get('/companies/{company}/salary-components', [PayrollController::class, 'components'])->middleware('permission:gaji.kelola');
         Route::get('/companies/{company}/salary-components', [PayrollController::class, 'components'])->middleware('permission:gaji.kelola');
         Route::post('/companies/{company}/salary-components', [PayrollController::class, 'storeComponent'])->middleware('permission:gaji.kelola');
         Route::put('/companies/{company}/salary-components/{component}', [PayrollController::class, 'updateComponent'])->middleware('permission:gaji.kelola');
@@ -234,7 +235,3 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         });
     });
 });
-
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
