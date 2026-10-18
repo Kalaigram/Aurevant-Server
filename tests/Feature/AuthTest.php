@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Application\Auth\Notifications\ResetPasswordLink;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Password;
 use Tests\TestCase;
 
 class AuthTest extends TestCase
@@ -102,5 +105,79 @@ class AuthTest extends TestCase
             'tokenable_id' => $userId,
             'tokenable_type' => User::class,
         ]);
+    }
+
+    public function test_lupa_dan_atur_ulang_password(): void
+    {
+        Notification::fake();
+
+        // email tak terdaftar: tetap 200, tanpa notifikasi (anti-enumerasi)
+        $this->postJson('/api/v1/auth/forgot-password', ['email' => 'hantu@example.com'])
+            ->assertOk()->assertJsonPath('status', 'success');
+        Notification::assertNothingSent();
+
+        $user = User::factory()->create(['email' => 'budi@example.com', 'password' => 'rahasia123']);
+        $user->createToken('sesi-lama');
+
+        $this->postJson('/api/v1/auth/forgot-password', ['email' => 'budi@example.com'])
+            ->assertOk();
+        Notification::assertSentTo($user, ResetPasswordLink::class);
+
+        // token palsu ditolak 422
+        $this->postJson('/api/v1/auth/reset-password', [
+            'email' => 'budi@example.com',
+            'token' => 'token-palsu',
+            'password' => 'baru12345',
+            'password_confirmation' => 'baru12345',
+        ])->assertUnprocessable()->assertJsonValidationErrors('token');
+
+        // token asli: password berubah, semua sesi lama dicabut
+        $this->postJson('/api/v1/auth/reset-password', [
+            'email' => 'budi@example.com',
+            'token' => Password::createToken($user),
+            'password' => 'baru12345',
+            'password_confirmation' => 'baru12345',
+        ])->assertOk();
+
+        $this->assertDatabaseMissing('personal_access_tokens', [
+            'tokenable_id' => $user->id,
+            'tokenable_type' => User::class,
+        ]);
+        $this->postJson('/api/v1/auth/login', ['login' => 'budi@example.com', 'password' => 'baru12345'])
+            ->assertOk();
+        $this->postJson('/api/v1/auth/login', ['login' => 'budi@example.com', 'password' => 'rahasia123'])
+            ->assertUnauthorized();
+    }
+
+    public function test_ganti_password(): void
+    {
+        $user = User::factory()->create(['email' => 'budi@example.com', 'password' => 'rahasia123']);
+        $current = $user->createToken('sekarang')->plainTextToken;
+        $other = $user->createToken('hp-lama')->plainTextToken;
+
+        $this->withHeaders(['Authorization' => 'Bearer '.$current])
+            ->postJson('/api/v1/auth/change-password', [
+                'current_password' => 'salah-salah',
+                'password' => 'baru12345',
+                'password_confirmation' => 'baru12345',
+            ])->assertUnprocessable()->assertJsonValidationErrors('current_password');
+
+        $this->withHeaders(['Authorization' => 'Bearer '.$current])
+            ->postJson('/api/v1/auth/change-password', [
+                'current_password' => 'rahasia123',
+                'password' => 'baru12345',
+                'password_confirmation' => 'baru12345',
+            ])->assertOk();
+
+        // sesi yang sedang dipakai tetap hidup, sesi lain dicabut
+        $this->app['auth']->forgetGuards();
+        $this->withHeaders(['Authorization' => 'Bearer '.$current])->getJson('/api/v1/auth/me')
+            ->assertOk();
+        $this->app['auth']->forgetGuards();
+        $this->withHeaders(['Authorization' => 'Bearer '.$other])->getJson('/api/v1/auth/me')
+            ->assertUnauthorized();
+
+        $this->postJson('/api/v1/auth/login', ['login' => 'budi@example.com', 'password' => 'baru12345'])
+            ->assertOk();
     }
 }

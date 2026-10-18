@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\CompanyController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\DebtController;
+use App\Http\Controllers\Api\V1\EmployeeController;
 use App\Http\Controllers\Api\V1\FinanceController;
 use App\Http\Controllers\Api\V1\ImportController;
 use App\Http\Controllers\Api\V1\ItemController;
@@ -39,10 +40,13 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(function (): void {
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
+    Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:6,1');
+    Route::post('/auth/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:6,1');
 
     Route::middleware(['auth:sanctum', 'scope.cabang', 'subscription.aktif'])->group(function (): void {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::get('/auth/me', [AuthController::class, 'me']);
+        Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
         Route::get('/companies', [CompanyController::class, 'index']);
         Route::post('/companies', [CompanyController::class, 'store']);
         Route::get('/companies/{company}/branches', [BranchController::class, 'index']);
@@ -217,6 +221,8 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::put('/companies/{company}/attendances/{attendance}', [LeaveController::class, 'correct'])->middleware('permission:absensi.koreksi');
         Route::get('/companies/{company}/users/{user}/card', [LeaveController::class, 'card']);
         Route::get('/companies/{company}/users/{user}/card/qr', [LeaveController::class, 'cardQr']);
+        Route::post('/companies/{company}/users', [EmployeeController::class, 'store'])->middleware('permission:karyawan.kelola');
+        Route::post('/companies/{company}/users/{user}/reset-password', [EmployeeController::class, 'resetPassword'])->middleware('permission:karyawan.kelola');
 
         Route::prefix('/companies/{company}/access')->group(function (): void {
             Route::get('/permissions', [AccessRoleController::class, 'permissions']);
