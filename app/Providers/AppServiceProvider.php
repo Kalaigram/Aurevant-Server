@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Application\Audit\Listeners\PersistAudit;
+use App\Application\Notify\Push\PushSender;
 use App\Domain\Access\Repositories\AssignmentRepositoryInterface;
 use App\Domain\Access\Repositories\RoleRepositoryInterface;
 use App\Domain\Attendance\Repositories\AttendanceRepositoryInterface;
@@ -76,6 +77,8 @@ use App\Infrastructure\Persistence\Eloquent\SummaryEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\SupplierBillEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\SupplierEloquentRepository;
 use App\Infrastructure\Persistence\Eloquent\UserEloquentRepository;
+use App\Infrastructure\Push\FcmPushSender;
+use App\Infrastructure\Push\NullPushSender;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
@@ -125,6 +128,17 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(LedgerRepositoryInterface::class, LedgerEloquentRepository::class);
         $this->app->bind(SalaryRepositoryInterface::class, SalaryEloquentRepository::class);
         $this->app->bind(PayrollRepositoryInterface::class, PayrollEloquentRepository::class);
+
+        $this->app->bind(PushSender::class, function (): PushSender {
+            $credentials = (string) config('services.firebase.credentials');
+            $projectId = (string) config('services.firebase.project_id');
+
+            if ($credentials === '' || $projectId === '' || ! is_file($credentials)) {
+                return new NullPushSender;
+            }
+
+            return new FcmPushSender($credentials, $projectId);
+        });
     }
 
     /**
