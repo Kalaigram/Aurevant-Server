@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('billing:generate')->dailyAt('01:00');
+Schedule::command('attendance:mark-absent')->dailyAt('00:30');

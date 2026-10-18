@@ -7,6 +7,8 @@ namespace Tests\Feature;
 use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\Company;
+use App\Models\Holiday;
+use App\Models\SchedulePattern;
 use App\Models\User;
 use App\Models\WorkShift;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -91,6 +93,64 @@ class AlpaLeaveCardTest extends TestCase
             "/api/v1/companies/{$company->id}/attendances/{$alpaId}",
             ['status' => 'hadir']
         )->assertForbidden();
+    }
+
+    public function test_alpa_semua_perusahaan_dan_skip_libur(): void
+    {
+        [$owner, $staff, $company, $branch, $shift] = $this->setupWorld();
+        $this->actingAs($owner, 'sanctum')->putJson(
+            "/api/v1/companies/{$company->id}/users/{$staff->id}/schedule-pattern",
+            ['patterns' => [null, $shift->id, $shift->id, $shift->id, $shift->id, $shift->id, null]]
+        )->assertOk();
+
+        // perusahaan aktif lain: karyawan terjadwal → ikut diproses
+        $staffAktif = User::factory()->create();
+        $companyAktif = Company::create(['name' => 'PT B', 'slug' => 'pt-b', 'status' => 'aktif']);
+        $shiftAktif = WorkShift::create([
+            'company_id' => $companyAktif->id, 'name' => 'Pagi',
+            'starts_at' => '08:00', 'ends_at' => '16:00',
+        ]);
+        SchedulePattern::query()->create([
+            'company_id' => $companyAktif->id, 'user_id' => $staffAktif->id,
+            'weekday' => 1, 'work_shift_id' => $shiftAktif->id,
+        ]);
+
+        // perusahaan ditangguhkan: tidak diproses walau ada jadwal
+        $staffSuspend = User::factory()->create();
+        $companySuspend = Company::create(['name' => 'PT C', 'slug' => 'pt-c', 'status' => 'ditangguhkan']);
+        $shiftSuspend = WorkShift::create([
+            'company_id' => $companySuspend->id, 'name' => 'Pagi',
+            'starts_at' => '08:00', 'ends_at' => '16:00',
+        ]);
+        SchedulePattern::query()->create([
+            'company_id' => $companySuspend->id, 'user_id' => $staffSuspend->id,
+            'weekday' => 1, 'work_shift_id' => $shiftSuspend->id,
+        ]);
+
+        Holiday::create(['company_id' => null, 'date' => '2026-10-13', 'name' => 'Libur Nasional']);
+        Holiday::create(['company_id' => $company->id, 'date' => '2026-10-14', 'name' => 'Libur Perusahaan']);
+
+        // tanpa --company: semua perusahaan aktif diproses
+        $this->artisan('attendance:mark-absent', ['--date' => '2026-10-12'])->assertSuccessful();
+        $this->assertDatabaseHas('attendances', [
+            'user_id' => $staff->id, 'date' => '2026-10-12', 'status' => 'alpa',
+        ]);
+        $this->assertDatabaseHas('attendances', [
+            'user_id' => $staffAktif->id, 'date' => '2026-10-12', 'status' => 'alpa',
+        ]);
+        $this->assertDatabaseMissing('attendances', ['user_id' => $staffSuspend->id]);
+
+        // libur nasional: tidak ditandai
+        $this->artisan('attendance:mark-absent', ['--date' => '2026-10-13'])->assertSuccessful();
+        $this->assertDatabaseMissing('attendances', ['user_id' => $staff->id, 'date' => '2026-10-13']);
+
+        // libur perusahaan: tidak ditandai
+        $this->artisan('attendance:mark-absent', ['--date' => '2026-10-14'])->assertSuccessful();
+        $this->assertDatabaseMissing('attendances', ['user_id' => $staff->id, 'date' => '2026-10-14']);
+
+        // --company tak dikenal: gagal
+        $this->artisan('attendance:mark-absent', ['--company' => 999, '--date' => '2026-10-12'])
+            ->assertFailed();
     }
 
     public function test_kartu_karyawan(): void
