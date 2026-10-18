@@ -21,6 +21,7 @@ final class NotificationTypes
             'sale.retur',
             'opname.disetujui',
             'shift.selisih',
+            'langganan.jatuh_tempo',
         ];
     }
 }

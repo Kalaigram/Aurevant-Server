@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('billing:generate')->dailyAt('01:00');
 Schedule::command('attendance:mark-absent')->dailyAt('00:30');
+Schedule::command('subscription:remind')->dailyAt('08:00');
