@@ -116,5 +116,25 @@ class ItemTest extends TestCase
         $api()->getJson("/api/v1/companies/{$a->id}/items/{$item->id}")
             ->assertOk()
             ->assertJsonPath('data.prices.0.branchId', $cabangA->id);
+
+        // GET harga cabang (dipakai kasir & katalog web/mobile)
+        $api()->getJson("/api/v1/companies/{$a->id}/items/{$item->id}/prices/{$cabangA->id}")
+            ->assertOk()
+            ->assertJsonPath('data.price', '55000.00')
+            ->assertJsonPath('data.branchId', $cabangA->id);
+
+        // cabang tanpa harga: 404
+        $cabangA2 = Branch::create(['company_id' => $a->id, 'code' => 'CB2', 'name' => 'Cabang 2']);
+        $api()->getJson("/api/v1/companies/{$a->id}/items/{$item->id}/prices/{$cabangA2->id}")
+            ->assertNotFound()
+            ->assertJsonPath('status', 'error');
+
+        // cabang perusahaan lain: 404
+        $api()->getJson("/api/v1/companies/{$a->id}/items/{$item->id}/prices/{$cabangB->id}")
+            ->assertNotFound();
+
+        // item perusahaan lain: 404
+        $api()->getJson("/api/v1/companies/{$b->id}/items/{$item->id}/prices/{$cabangB->id}")
+            ->assertNotFound();
     }
 }

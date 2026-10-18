@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Application\Catalog\DTOs\ItemDTO;
+use App\Application\Catalog\DTOs\ItemPriceDTO;
 use App\Application\Catalog\UseCases\CreateItem;
 use App\Application\Catalog\UseCases\DeleteItem;
 use App\Application\Catalog\UseCases\ListItems;
@@ -12,6 +13,7 @@ use App\Application\Catalog\UseCases\SetItemPrice;
 use App\Application\Catalog\UseCases\UpdateItem;
 use App\Domain\Branch\Repositories\BranchRepositoryInterface;
 use App\Domain\Catalog\Repositories\CategoryRepositoryInterface;
+use App\Domain\Catalog\Repositories\ItemPriceRepositoryInterface;
 use App\Domain\Catalog\Repositories\ItemRepositoryInterface;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
@@ -76,6 +78,18 @@ class ItemController extends Controller
         $useCase($this->scoped($company, $item, $items));
 
         return ApiResponse::success(null, 'Item dihapus.');
+    }
+
+    public function price(Company $company, int $item, int $branch, ItemRepositoryInterface $items, BranchRepositoryInterface $branches, ItemPriceRepositoryInterface $prices): JsonResponse
+    {
+        $scopedItem = $this->scoped($company, $item, $items);
+        $scopedBranch = $branches->findForCompany($company, $branch) ?? abort(404);
+        $priceRow = $prices->findForItemBranch($scopedItem->id, $scopedBranch->id) ?? abort(404);
+
+        return ApiResponse::success(
+            ItemPriceDTO::fromModel($priceRow),
+            'Harga cabang.'
+        );
     }
 
     public function setPrice(Request $request, Company $company, int $item, int $branch, ItemRepositoryInterface $items, BranchRepositoryInterface $branches, SetItemPrice $useCase): JsonResponse
