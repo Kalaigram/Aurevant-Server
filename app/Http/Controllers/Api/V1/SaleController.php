@@ -29,11 +29,21 @@ class SaleController extends Controller
     {
         $validated = $request->validate([
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'status' => ['sometimes', 'string', Rule::in(['lunas', 'void', 'retur'])],
+            'q' => ['sometimes', 'string', 'max:100'],
+            'from' => ['sometimes', 'date'],
+            'to' => ['sometimes', 'date'],
         ]);
 
         $paginator = $sales->paginateForBranch(
             $this->scopedBranch($company, $branch, $branches),
-            (int) ($validated['per_page'] ?? 15)
+            (int) ($validated['per_page'] ?? 15),
+            [
+                'status' => $validated['status'] ?? null,
+                'q' => isset($validated['q']) ? trim($validated['q']) : null,
+                'from' => $validated['from'] ?? null,
+                'to' => $validated['to'] ?? null,
+            ],
         );
 
         return ApiResponse::paginated(

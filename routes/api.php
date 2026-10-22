@@ -190,6 +190,7 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::put('/companies/{company}/salary-components/{component}', [PayrollController::class, 'updateComponent'])->middleware('permission:gaji.kelola');
         Route::post('/companies/{company}/users/{user}/salary-components', [PayrollController::class, 'assignComponent'])->middleware('permission:gaji.kelola');
         Route::get('/companies/{company}/payroll-periods', [PayrollController::class, 'periods'])->middleware('permission:gaji.kelola');
+        Route::get('/companies/{company}/payroll-periods/me', [PayrollController::class, 'myPeriods']);
         Route::post('/companies/{company}/payroll-periods', [PayrollController::class, 'storePeriod'])->middleware('permission:gaji.kelola');
         Route::get('/companies/{company}/payroll-periods/{period}', [PayrollController::class, 'showPeriod'])->middleware('permission:gaji.kelola');
         Route::post('/companies/{company}/payroll-periods/{period}/calculate', [PayrollController::class, 'calculate'])->middleware('permission:gaji.kelola');
@@ -207,6 +208,7 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::post('/companies/{company}/users/{user}/schedule-overrides', [ScheduleController::class, 'upsertOverride'])->middleware('permission:shift.kelola');
         Route::delete('/companies/{company}/users/{user}/schedule-overrides', [ScheduleController::class, 'deleteOverride'])->middleware('permission:shift.kelola');
         Route::get('/companies/{company}/users/{user}/schedule', [ScheduleController::class, 'view'])->middleware('permission:jadwal.lihat');
+        Route::get('/companies/{company}/schedule/team', [ScheduleController::class, 'team'])->middleware('permission:jadwal.lihat');
         Route::get('/companies/{company}/holidays', [ScheduleController::class, 'holidays']);
         Route::post('/companies/{company}/holidays', [ScheduleController::class, 'storeHoliday'])->middleware('permission:pengaturan.kelola');
         Route::delete('/companies/{company}/holidays/{holiday}', [ScheduleController::class, 'destroyHoliday'])->middleware('permission:pengaturan.kelola');

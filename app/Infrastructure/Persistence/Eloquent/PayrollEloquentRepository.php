@@ -21,6 +21,15 @@ final class PayrollEloquentRepository implements PayrollRepositoryInterface
             ->paginate($perPage);
     }
 
+    public function paginatePeriodsForUser(Company $company, User $user, int $perPage): LengthAwarePaginator
+    {
+        return PayrollPeriod::query()
+            ->where('company_id', $company->id)
+            ->whereHas('lines', fn ($query) => $query->where('user_id', $user->id))
+            ->orderByDesc('date_to')
+            ->paginate($perPage);
+    }
+
     public function findPeriod(Company $company, int $id): ?PayrollPeriod
     {
         return PayrollPeriod::query()

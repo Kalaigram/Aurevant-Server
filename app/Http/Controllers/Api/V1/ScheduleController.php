@@ -10,6 +10,7 @@ use App\Application\Schedule\UseCases\ManageOverrides;
 use App\Application\Schedule\UseCases\ManagePatterns;
 use App\Application\Schedule\UseCases\ManageShifts;
 use App\Application\Schedule\UseCases\ViewSchedule;
+use App\Application\Schedule\UseCases\ViewTeamSchedule;
 use App\Domain\Schedule\Repositories\ScheduleRepositoryInterface;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
@@ -119,6 +120,19 @@ class ScheduleController extends Controller
         return ApiResponse::success(
             $useCase($company, $user, $validated['from'], $validated['to']),
             'Jadwal efektif.'
+        );
+    }
+
+    public function team(Request $request, Company $company, ViewTeamSchedule $useCase): JsonResponse
+    {
+        $validated = $request->validate([
+            'from' => ['required', 'date'],
+            'to' => ['required', 'date', 'after_or_equal:from'],
+        ]);
+
+        return ApiResponse::success(
+            $useCase($company, $validated['from'], $validated['to']),
+            'Jadwal tim.'
         );
     }
 

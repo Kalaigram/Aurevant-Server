@@ -10,8 +10,11 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 interface SaleRepositoryInterface
 {
-    /** @return LengthAwarePaginator<int, Sale> */
-    public function paginateForBranch(Branch $branch, int $perPage): LengthAwarePaginator;
+    /**
+     * @param  array{status?: string, q?: string, from?: string, to?: string}  $filters
+     * @return LengthAwarePaginator<int, Sale>
+     */
+    public function paginateForBranch(Branch $branch, int $perPage, array $filters = []): LengthAwarePaginator;
 
     public function findForBranch(Branch $branch, int $id): ?Sale;
 

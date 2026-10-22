@@ -15,6 +15,9 @@ interface PayrollRepositoryInterface
     /** @return LengthAwarePaginator<int, PayrollPeriod> */
     public function paginatePeriods(Company $company, int $perPage): LengthAwarePaginator;
 
+    /** @return LengthAwarePaginator<int, PayrollPeriod> */
+    public function paginatePeriodsForUser(Company $company, User $user, int $perPage): LengthAwarePaginator;
+
     public function findPeriod(Company $company, int $id): ?PayrollPeriod;
 
     public function createPeriod(Company $company, array $attributes): PayrollPeriod;

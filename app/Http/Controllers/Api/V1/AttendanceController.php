@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Shared\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AttendanceController extends Controller
 {
@@ -22,7 +23,11 @@ class AttendanceController extends Controller
     {
         $found = $branches->findForCompany($company, $branch) ?? abort(404);
 
-        return ApiResponse::success($useCase($company, $found), 'QR cabang.');
+        $qr = $useCase($company, $found);
+        $svg = QrCode::format('svg')->size(240)->margin(1)->generate($qr['token']);
+        $qr['qr_svg'] = 'data:image/svg+xml;base64,'.base64_encode((string) $svg);
+
+        return ApiResponse::success($qr, 'QR cabang.');
     }
 
     public function clockIn(Request $request, Company $company, ClockIn $useCase): JsonResponse

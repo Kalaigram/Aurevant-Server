@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Application\Payroll\DTOs\PayrollPeriodDTO;
 use App\Application\Payroll\UseCases\CalculatePayroll;
 use App\Application\Payroll\UseCases\ManageAdjustments;
 use App\Application\Payroll\UseCases\ManageComponents;
@@ -73,6 +74,24 @@ class PayrollController extends Controller
         return ApiResponse::paginated(
             $payrolls->paginatePeriods($company, (int) ($validated['per_page'] ?? 15)),
             'Daftar periode.'
+        );
+    }
+
+    public function myPeriods(Request $request, Company $company, PayrollRepositoryInterface $payrolls): JsonResponse
+    {
+        abort_unless($request->user()->can('gaji.lihat_sendiri'), 403, 'Akses ditolak.');
+
+        $validated = $request->validate([
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        return ApiResponse::paginated(
+            $payrolls->paginatePeriodsForUser(
+                $company,
+                $request->user(),
+                (int) ($validated['per_page'] ?? 50),
+            )->through(fn ($period) => PayrollPeriodDTO::fromModel($period)),
+            'Daftar periode slip saya.'
         );
     }
 

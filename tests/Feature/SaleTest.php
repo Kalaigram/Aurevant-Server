@@ -130,6 +130,35 @@ class SaleTest extends TestCase
         $this->assertEquals(1, Sale::count());
     }
 
+    public function test_daftar_nota_bisa_disaring_dan_detail_memuat_id_baris(): void
+    {
+        [$user, $company, $branch, $oli, $kain, $servis] = $this->setupWorld();
+        $this->openShift($user, $company, $branch);
+        $this->setPrices($branch, $oli, $kain, $servis);
+        $this->stockIn($user, $company, $branch, $oli, 5, 40000);
+        $api = fn () => $this->actingAs($user, 'sanctum');
+        $base = "/api/v1/companies/{$company->id}/branches/{$branch->id}/sales";
+
+        $nota = $api()->postJson($base, [
+            'items' => [['item_id' => $oli->id, 'qty' => 1]],
+            'payments' => [['method' => 'tunai', 'amount' => 50000]],
+        ])->assertCreated()->json('data');
+
+        $detail = $api()->getJson("{$base}/{$nota['id']}")->assertOk()->json('data');
+        $this->assertGreaterThan(0, $detail['items'][0]['saleItemId']);
+        $this->assertSame('Oli', $detail['items'][0]['itemName']);
+        $this->assertSame('0', $detail['items'][0]['returnedQty']);
+
+        $today = now()->toDateString();
+        $daftar = $api()->getJson("{$base}?status=lunas&q=TKO&from={$today}&to={$today}")
+            ->assertOk()->json('data');
+        $this->assertCount(1, $daftar);
+        $this->assertSame($nota['number'], $daftar[0]['number']);
+
+        $kosong = $api()->getJson("{$base}?status=void")->assertOk()->json('data');
+        $this->assertCount(0, $kosong);
+    }
+
     public function test_validasi_nota_ketat(): void
     {
         [$user, $company, $branch, $oli] = $this->setupWorld();

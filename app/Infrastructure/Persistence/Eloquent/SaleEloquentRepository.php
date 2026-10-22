@@ -11,11 +11,20 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 final class SaleEloquentRepository implements SaleRepositoryInterface
 {
-    public function paginateForBranch(Branch $branch, int $perPage): LengthAwarePaginator
+    public function paginateForBranch(Branch $branch, int $perPage, array $filters = []): LengthAwarePaginator
     {
         return Sale::query()
-            ->with(['items.item', 'payments'])
+            ->with(['items.item', 'payments', 'user:id,name', 'customer:id,name'])
             ->where('branch_id', $branch->id)
+            ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
+            ->when($filters['q'] ?? null, function ($query, $term) {
+                $like = '%'.$term.'%';
+                $query->where(fn ($inner) => $inner
+                    ->where('number', 'like', $like)
+                    ->orWhereHas('customer', fn ($customer) => $customer->where('name', 'like', $like)));
+            })
+            ->when($filters['from'] ?? null, fn ($query, $from) => $query->whereDate('created_at', '>=', $from))
+            ->when($filters['to'] ?? null, fn ($query, $to) => $query->whereDate('created_at', '<=', $to))
             ->orderByDesc('id')
             ->paginate($perPage);
     }
@@ -23,7 +32,7 @@ final class SaleEloquentRepository implements SaleRepositoryInterface
     public function findForBranch(Branch $branch, int $id): ?Sale
     {
         return Sale::query()
-            ->with(['items.item', 'payments'])
+            ->with(['items.item', 'payments', 'user:id,name', 'customer:id,name', 'returns.items'])
             ->where('branch_id', $branch->id)
             ->whereKey($id)
             ->first();
