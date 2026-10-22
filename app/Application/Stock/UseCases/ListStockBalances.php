@@ -16,9 +16,9 @@ final class ListStockBalances
     ) {}
 
     /** @return LengthAwarePaginator<int, StockBalanceDTO> */
-    public function __invoke(Branch $branch, int $perPage): LengthAwarePaginator
+    public function __invoke(Branch $branch, int $perPage, ?string $q = null): LengthAwarePaginator
     {
-        return $this->balances->paginateForBranch($branch, $perPage)
+        return $this->balances->paginateForBranch($branch, $perPage, $q)
             ->through(fn ($balance) => StockBalanceDTO::fromModel($balance));
     }
 }

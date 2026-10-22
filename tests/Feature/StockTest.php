@@ -47,7 +47,11 @@ class StockTest extends TestCase
 
         $api()->postJson($url, [
             'item_id' => $item->id, 'type' => 'pembelian', 'qty' => 100, 'unit_cost' => 50000,
-        ])->assertCreated()->assertJsonPath('data.balanceAfter', '100.000');
+        ])->assertCreated()
+            ->assertJsonPath('data.balanceAfter', '100.000')
+            ->assertJsonPath('data.itemCode', 'OLI-01')
+            ->assertJsonPath('data.itemName', 'Oli')
+            ->assertJsonPath('data.unit', 'pcs');
 
         $api()->postJson($url, [
             'item_id' => $item->id, 'type' => 'pembelian', 'qty' => 100, 'unit_cost' => 70000,
@@ -61,6 +65,19 @@ class StockTest extends TestCase
             ->assertOk();
         $this->assertEquals('150.000', $saldo->json('data.0.qty'));
         $this->assertEquals('60000.00', $saldo->json('data.0.avgCost'));
+
+        // pencarian saldo dan riwayat memuat nama item
+        $api()->getJson("/api/v1/companies/{$company->id}/branches/{$branch->id}/stock?q=OLI")
+            ->assertOk()->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.itemName', 'Oli')
+            ->assertJsonPath('data.0.unit', 'pcs');
+        $api()->getJson("{$url}?q=OLI")
+            ->assertOk()->assertJsonPath('meta.total', 3)
+            ->assertJsonPath('data.0.itemCode', 'OLI-01')
+            ->assertJsonPath('data.0.itemName', 'Oli')
+            ->assertJsonPath('data.0.unit', 'pcs');
+        $api()->getJson("{$url}?q=tidak-ada")
+            ->assertOk()->assertJsonPath('meta.total', 0);
 
         // jual melebihi saldo: tolak
         $api()->postJson($url, [
@@ -104,9 +121,13 @@ class StockTest extends TestCase
         $api()->getJson("/api/v1/companies/{$company->id}/branches/{$otherBranch->id}/stock")
             ->assertNotFound()->assertJsonPath('status', 'error');
 
-        // riwayat bisa difilter per item
+        // riwayat bisa difilter per item dan dicari lewat catatan
         $api()->getJson(
             "/api/v1/companies/{$company->id}/branches/{$branch->id}/stock/movements?item_id={$item->id}"
         )->assertOk()->assertJsonPath('meta.total', 2);
+        $api()->getJson(
+            "/api/v1/companies/{$company->id}/branches/{$branch->id}/stock/movements?q=Rusak"
+        )->assertOk()->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.note', 'Rusak');
     }
 }

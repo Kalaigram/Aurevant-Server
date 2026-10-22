@@ -12,7 +12,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 interface StockOpnameRepositoryInterface
 {
     /** @return LengthAwarePaginator<int, StockOpname> */
-    public function paginateForBranch(Branch $branch, int $perPage): LengthAwarePaginator;
+    public function paginateForBranch(Branch $branch, int $perPage, ?string $status = null): LengthAwarePaginator;
 
     public function findForBranch(Branch $branch, int $id): ?StockOpname;
 

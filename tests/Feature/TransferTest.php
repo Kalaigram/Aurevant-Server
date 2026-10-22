@@ -59,13 +59,23 @@ class TransferTest extends TestCase
             'to_branch_id' => $toko->id,
             'items' => [['item_id' => $item->id, 'qty' => 40]],
             'note' => 'Restok toko',
-        ])->assertCreated()->assertJsonPath('data.status', 'draft')->json('data.id');
+        ])->assertCreated()
+            ->assertJsonPath('data.status', 'draft')
+            ->assertJsonPath('data.fromBranchName', 'Gudang')
+            ->assertJsonPath('data.toBranchName', 'Toko')
+            ->assertJsonStructure(['data' => ['createdAt', 'fromBranchCode', 'toBranchCode']])
+            ->json('data.id');
+
+        // filter status daftar
+        $api()->getJson("{$base}?status=draft")->assertOk()->assertJsonPath('meta.total', 1);
+        $api()->getJson("{$base}?status=diajukan")->assertOk()->assertJsonPath('meta.total', 0);
 
         // approve langsung tanpa submit: tolak
         $api()->postJson("{$base}/{$id}/approve")
             ->assertUnprocessable()->assertJsonPath('status', 'error');
 
         $api()->postJson("{$base}/{$id}/submit")->assertOk()->assertJsonPath('data.status', 'diajukan');
+        $api()->getJson("{$base}?status=diajukan")->assertOk()->assertJsonPath('meta.total', 1);
         $api()->postJson("{$base}/{$id}/approve")->assertOk()->assertJsonPath('data.status', 'disetujui');
 
         // gudang belum berkurang sebelum dikirim
@@ -89,6 +99,11 @@ class TransferTest extends TestCase
         $detail = $api()->getJson("{$base}/{$id}")->assertOk()->json('data');
         $this->assertEquals('40.000', $detail['items'][0]['qtyRequested']);
         $this->assertEquals('35.000', $detail['items'][0]['qtyReceived']);
+        $this->assertEquals('OLI-01', $detail['items'][0]['itemCode']);
+        $this->assertEquals('Oli', $detail['items'][0]['itemName']);
+        $this->assertEquals('pcs', $detail['items'][0]['unit']);
+        $this->assertNotNull($detail['shippedAt']);
+        $this->assertNotNull($detail['receivedAt']);
     }
 
     public function test_kirim_stok_kurang_ditolak_dan_bisa_batal(): void

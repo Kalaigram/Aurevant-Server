@@ -11,8 +11,10 @@ final readonly class StockOpnameDTO
     public function __construct(
         public int $id,
         public int $branchId,
+        public ?string $branchName,
         public string $status,
         public ?string $note,
+        public ?string $createdAt,
         /** @var list<StockOpnameItemDTO> */
         public array $items,
     ) {}
@@ -22,8 +24,10 @@ final readonly class StockOpnameDTO
         return new self(
             id: $opname->id,
             branchId: $opname->branch_id,
+            branchName: $opname->relationLoaded('branch') ? $opname->branch?->name : null,
             status: $opname->status,
             note: $opname->note,
+            createdAt: $opname->created_at?->toIso8601String(),
             items: $opname->relationLoaded('items')
                 ? $opname->items->map(fn ($item) => StockOpnameItemDTO::fromModel($item))->all()
                 : [],

@@ -12,6 +12,8 @@ final readonly class GoodsReceiptDTO
         public int $id,
         public int $purchaseOrderId,
         public ?string $dueAt,
+        public ?string $note,
+        public ?string $createdAt,
         /** @var list<GoodsReceiptItemDTO> */
         public array $items,
     ) {}
@@ -22,6 +24,8 @@ final readonly class GoodsReceiptDTO
             id: $receipt->id,
             purchaseOrderId: $receipt->purchase_order_id,
             dueAt: $receipt->due_at?->toDateString(),
+            note: $receipt->note,
+            createdAt: $receipt->created_at?->toIso8601String(),
             items: $receipt->relationLoaded('items')
                 ? $receipt->items->map(fn ($item) => GoodsReceiptItemDTO::fromModel($item))->all()
                 : [],

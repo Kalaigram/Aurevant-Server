@@ -40,11 +40,17 @@ final class StockBalanceEloquentRepository implements StockBalanceRepositoryInte
         return $balance->refresh();
     }
 
-    public function paginateForBranch(Branch $branch, int $perPage): LengthAwarePaginator
+    public function paginateForBranch(Branch $branch, int $perPage, ?string $q = null): LengthAwarePaginator
     {
         return StockBalance::query()
             ->with('item')
             ->where('branch_id', $branch->id)
+            ->when($q !== null && $q !== '', function ($query) use ($q) {
+                $like = '%'.$q.'%';
+                $query->whereHas('item', fn ($item) => $item
+                    ->where('code', 'like', $like)
+                    ->orWhere('name', 'like', $like));
+            })
             ->orderBy('id')
             ->paginate($perPage);
     }

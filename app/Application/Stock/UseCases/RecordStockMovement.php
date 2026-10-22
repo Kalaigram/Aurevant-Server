@@ -70,7 +70,7 @@ final class RecordStockMovement
                 'note' => $note,
             ]);
 
-            return StockMovementDTO::fromModel($movement);
+            return StockMovementDTO::fromModel($movement->load('item'));
         });
     }
 }

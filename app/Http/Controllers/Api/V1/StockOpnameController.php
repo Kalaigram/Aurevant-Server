@@ -18,6 +18,7 @@ use App\Models\StockOpname;
 use App\Shared\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class StockOpnameController extends Controller
 {
@@ -25,10 +26,15 @@ class StockOpnameController extends Controller
     {
         $validated = $request->validate([
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'status' => ['sometimes', 'string', Rule::in(['draft', 'diajukan', 'disetujui', 'ditolak'])],
         ]);
 
         return ApiResponse::paginated(
-            $useCase($this->scopedBranch($company, $branch, $branches), (int) ($validated['per_page'] ?? 15)),
+            $useCase(
+                $this->scopedBranch($company, $branch, $branches),
+                (int) ($validated['per_page'] ?? 15),
+                $validated['status'] ?? null,
+            ),
             'Daftar opname.'
         );
     }

@@ -19,5 +19,5 @@ interface StockBalanceRepositoryInterface
     public function save(StockBalance $balance): StockBalance;
 
     /** @return LengthAwarePaginator<int, StockBalance> */
-    public function paginateForBranch(Branch $branch, int $perPage): LengthAwarePaginator;
+    public function paginateForBranch(Branch $branch, int $perPage, ?string $q = null): LengthAwarePaginator;
 }

@@ -16,12 +16,20 @@ final class StockMovementEloquentRepository implements StockMovementRepositoryIn
         return StockMovement::query()->create($attributes)->refresh();
     }
 
-    public function historyForBranch(Branch $branch, int $perPage, ?int $itemId = null): LengthAwarePaginator
+    public function historyForBranch(Branch $branch, int $perPage, ?int $itemId = null, ?string $q = null): LengthAwarePaginator
     {
         return StockMovement::query()
             ->with('item')
             ->where('branch_id', $branch->id)
             ->when($itemId !== null, fn ($query) => $query->where('item_id', $itemId))
+            ->when($q !== null && $q !== '', function ($query) use ($q) {
+                $like = '%'.$q.'%';
+                $query->where(fn ($inner) => $inner
+                    ->where('note', 'like', $like)
+                    ->orWhereHas('item', fn ($item) => $item
+                        ->where('code', 'like', $like)
+                        ->orWhere('name', 'like', $like)));
+            })
             ->orderByDesc('id')
             ->paginate($perPage);
     }

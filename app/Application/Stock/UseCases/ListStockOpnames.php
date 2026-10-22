@@ -16,9 +16,9 @@ final class ListStockOpnames
     ) {}
 
     /** @return LengthAwarePaginator<int, StockOpnameDTO> */
-    public function __invoke(Branch $branch, int $perPage): LengthAwarePaginator
+    public function __invoke(Branch $branch, int $perPage, ?string $status = null): LengthAwarePaginator
     {
-        return $this->opnames->paginateForBranch($branch, $perPage)
+        return $this->opnames->paginateForBranch($branch, $perPage, $status)
             ->through(fn ($opname) => StockOpnameDTO::fromModel($opname));
     }
 }

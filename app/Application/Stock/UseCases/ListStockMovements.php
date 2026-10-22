@@ -16,9 +16,9 @@ final class ListStockMovements
     ) {}
 
     /** @return LengthAwarePaginator<int, StockMovementDTO> */
-    public function __invoke(Branch $branch, int $perPage, ?int $itemId = null): LengthAwarePaginator
+    public function __invoke(Branch $branch, int $perPage, ?int $itemId = null, ?string $q = null): LengthAwarePaginator
     {
-        return $this->movements->historyForBranch($branch, $perPage, $itemId)
+        return $this->movements->historyForBranch($branch, $perPage, $itemId, $q)
             ->through(fn ($movement) => StockMovementDTO::fromModel($movement));
     }
 }

@@ -57,15 +57,24 @@ class OpnameTest extends TestCase
             'items' => [['item_id' => $item->id, 'qty_counted' => 95]],
             'note' => 'Opname bulanan',
         ])->assertCreated()
+            ->assertJsonPath('data.branchName', 'Toko')
+            ->assertJsonPath('data.items.0.itemCode', 'OLI-01')
+            ->assertJsonPath('data.items.0.itemName', 'Oli')
             ->assertJsonPath('data.items.0.qtySystem', '100.000')
             ->assertJsonPath('data.items.0.diff', '-5')
+            ->assertJsonStructure(['data' => ['createdAt', 'branchName']])
             ->json('data.id');
+
+        // filter status daftar
+        $api()->getJson("{$base}?status=draft")->assertOk()->assertJsonPath('meta.total', 1);
+        $api()->getJson("{$base}?status=diajukan")->assertOk()->assertJsonPath('meta.total', 0);
 
         // approve langsung: tolak
         $api()->postJson("{$base}/{$id}/approve")
             ->assertUnprocessable()->assertJsonPath('status', 'error');
 
         $api()->postJson("{$base}/{$id}/submit")->assertOk();
+        $api()->getJson("{$base}?status=diajukan")->assertOk()->assertJsonPath('meta.total', 1);
         $api()->postJson("{$base}/{$id}/approve")
             ->assertOk()->assertJsonPath('data.status', 'disetujui');
 

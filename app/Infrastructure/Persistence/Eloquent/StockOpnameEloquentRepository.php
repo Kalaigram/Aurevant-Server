@@ -12,11 +12,12 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 final class StockOpnameEloquentRepository implements StockOpnameRepositoryInterface
 {
-    public function paginateForBranch(Branch $branch, int $perPage): LengthAwarePaginator
+    public function paginateForBranch(Branch $branch, int $perPage, ?string $status = null): LengthAwarePaginator
     {
         return StockOpname::query()
-            ->with('items.item')
+            ->with(['items.item', 'branch'])
             ->where('branch_id', $branch->id)
+            ->when($status !== null, fn ($query) => $query->where('status', $status))
             ->orderByDesc('id')
             ->paginate($perPage);
     }
@@ -24,7 +25,7 @@ final class StockOpnameEloquentRepository implements StockOpnameRepositoryInterf
     public function findForBranch(Branch $branch, int $id): ?StockOpname
     {
         return StockOpname::query()
-            ->with('items.item')
+            ->with(['items.item', 'branch'])
             ->where('branch_id', $branch->id)
             ->whereKey($id)
             ->first();
@@ -39,13 +40,13 @@ final class StockOpnameEloquentRepository implements StockOpnameRepositoryInterf
         ]);
         $opname->items()->createMany($items);
 
-        return $opname->refresh()->load('items.item');
+        return $opname->refresh()->load(['items.item', 'branch']);
     }
 
     public function save(StockOpname $opname): StockOpname
     {
         $opname->save();
 
-        return $opname->refresh()->load('items.item');
+        return $opname->refresh()->load(['items.item', 'branch']);
     }
 }

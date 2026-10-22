@@ -16,9 +16,9 @@ final class ListPurchaseOrders
     ) {}
 
     /** @return LengthAwarePaginator<int, PurchaseOrderDTO> */
-    public function __invoke(Company $company, int $perPage, ?string $status = null, ?int $branchId = null): LengthAwarePaginator
+    public function __invoke(Company $company, int $perPage, ?string $status = null, ?int $branchId = null, ?string $q = null): LengthAwarePaginator
     {
-        return $this->orders->paginateForCompany($company, $perPage, $status, $branchId)
+        return $this->orders->paginateForCompany($company, $perPage, $status, $branchId, $q)
             ->through(fn ($order) => PurchaseOrderDTO::fromModel($order));
     }
 }

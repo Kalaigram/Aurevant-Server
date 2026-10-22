@@ -24,10 +24,15 @@ class StockController extends Controller
     {
         $validated = $request->validate([
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'q' => ['sometimes', 'string', 'max:100'],
         ]);
 
         return ApiResponse::paginated(
-            $useCase($this->scopedBranch($company, $branch, $branches), (int) ($validated['per_page'] ?? 15)),
+            $useCase(
+                $this->scopedBranch($company, $branch, $branches),
+                (int) ($validated['per_page'] ?? 15),
+                $validated['q'] ?? null,
+            ),
             'Saldo stok.'
         );
     }
@@ -37,6 +42,7 @@ class StockController extends Controller
         $validated = $request->validate([
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'item_id' => ['sometimes', 'integer'],
+            'q' => ['sometimes', 'string', 'max:100'],
         ]);
 
         $scopedBranch = $this->scopedBranch($company, $branch, $branches);
@@ -45,7 +51,7 @@ class StockController extends Controller
             : null;
 
         return ApiResponse::paginated(
-            $useCase($scopedBranch, (int) ($validated['per_page'] ?? 15), $itemId),
+            $useCase($scopedBranch, (int) ($validated['per_page'] ?? 15), $itemId, $validated['q'] ?? null),
             'Riwayat mutasi stok.'
         );
     }

@@ -10,6 +10,8 @@ final readonly class GoodsReceiptItemDTO
 {
     public function __construct(
         public int $itemId,
+        public ?string $itemName,
+        public ?string $unit,
         public string $qtyReceived,
         public string $unitCost,
     ) {}
@@ -18,6 +20,8 @@ final readonly class GoodsReceiptItemDTO
     {
         return new self(
             itemId: $item->item_id,
+            itemName: $item->relationLoaded('item') ? $item->item?->name : null,
+            unit: $item->relationLoaded('item') ? $item->item?->unit : null,
             qtyReceived: (string) $item->qty_received,
             unitCost: (string) $item->unit_cost,
         );

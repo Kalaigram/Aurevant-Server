@@ -30,6 +30,7 @@ class PurchaseOrderController extends Controller
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'status' => ['sometimes', 'string', Rule::in(['draft', 'diajukan', 'disetujui', 'dipesan', 'selesai', 'dibatalkan'])],
             'branch_id' => ['sometimes', 'integer'],
+            'q' => ['sometimes', 'string', 'max:100'],
         ]);
 
         $branchId = isset($validated['branch_id'])
@@ -37,7 +38,7 @@ class PurchaseOrderController extends Controller
             : null;
 
         return ApiResponse::paginated(
-            $useCase($company, (int) ($validated['per_page'] ?? 15), $validated['status'] ?? null, $branchId),
+            $useCase($company, (int) ($validated['per_page'] ?? 15), $validated['status'] ?? null, $branchId, $validated['q'] ?? null),
             'Daftar PO.'
         );
     }

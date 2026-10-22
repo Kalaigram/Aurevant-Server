@@ -13,5 +13,5 @@ interface StockMovementRepositoryInterface
     public function record(array $attributes): StockMovement;
 
     /** @return LengthAwarePaginator<int, StockMovement> */
-    public function historyForBranch(Branch $branch, int $perPage, ?int $itemId = null): LengthAwarePaginator;
+    public function historyForBranch(Branch $branch, int $perPage, ?int $itemId = null, ?string $q = null): LengthAwarePaginator;
 }

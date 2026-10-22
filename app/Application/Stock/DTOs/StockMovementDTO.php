@@ -11,6 +11,9 @@ final readonly class StockMovementDTO
     public function __construct(
         public int $id,
         public int $itemId,
+        public ?string $itemCode,
+        public ?string $itemName,
+        public ?string $unit,
         public string $type,
         public string $qty,
         public ?string $unitCost,
@@ -25,6 +28,9 @@ final readonly class StockMovementDTO
         return new self(
             id: $movement->id,
             itemId: $movement->item_id,
+            itemCode: $movement->relationLoaded('item') ? $movement->item?->code : null,
+            itemName: $movement->relationLoaded('item') ? $movement->item?->name : null,
+            unit: $movement->relationLoaded('item') ? $movement->item?->unit : null,
             type: $movement->type,
             qty: (string) $movement->qty,
             unitCost: $movement->unit_cost === null ? null : (string) $movement->unit_cost,

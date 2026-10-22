@@ -60,6 +60,12 @@ class PurchaseOrderTest extends TestCase
         $this->assertEquals('4.000', $detail['items'][0]['qtyReceived']);
         $this->assertEquals('192000.00', $detail['bill']['amount']);
         $this->assertEquals('2026-11-10', $detail['bill']['dueAt']);
+        $this->assertEquals('PT Sumber', $detail['supplierName']);
+        $this->assertEquals('Gudang', $detail['branchName']);
+        $this->assertEquals('Oli', $detail['items'][0]['itemName']);
+        $this->assertEquals('pcs', $detail['items'][0]['unit']);
+        $this->assertEquals('480000.00', $detail['total']);
+        $this->assertNotNull($detail['createdAt']);
 
         $stok = $api()->getJson("/api/v1/companies/{$company->id}/branches/{$branch->id}/stock")
             ->assertOk()->json('data');
@@ -77,6 +83,30 @@ class PurchaseOrderTest extends TestCase
         $api()->postJson("{$base}/{$id}/receive", [
             'items' => [['item_id' => $item->id, 'qty_received' => 1, 'unit_cost' => 50000]],
         ])->assertUnprocessable()->assertJsonPath('status', 'error');
+    }
+
+    public function test_daftar_bisa_disaring_supplier_dan_memuat_nama_item(): void
+    {
+        [$user, $company, $branch, $supplier, $item] = $this->setupWorld();
+        Supplier::create(['company_id' => $company->id, 'name' => 'CV Lain']);
+        $api = fn () => $this->actingAs($user, 'sanctum');
+        $base = "/api/v1/companies/{$company->id}/purchase-orders";
+
+        foreach (['PT Sumber', 'CV Lain'] as $name) {
+            $supplierId = Supplier::where('company_id', $company->id)->where('name', $name)->value('id');
+            $api()->postJson($base, [
+                'branch_id' => $branch->id,
+                'supplier_id' => $supplierId,
+                'items' => [['item_id' => $item->id, 'qty_ordered' => 2, 'unit_price' => 1000]],
+            ])->assertCreated();
+        }
+
+        $page = $api()->getJson("{$base}?q=Sumber")->assertOk()->json();
+        $this->assertCount(1, $page['data']);
+        $this->assertEquals('PT Sumber', $page['data'][0]['supplierName']);
+        $this->assertEquals('Gudang', $page['data'][0]['branchName']);
+        $this->assertEquals('Oli', $page['data'][0]['items'][0]['itemName']);
+        $this->assertNotNull($page['data'][0]['createdAt']);
     }
 
     public function test_terima_melebihi_sisa_ditolak_dan_batal(): void
