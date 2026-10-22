@@ -31,6 +31,7 @@ class ItemController extends Controller
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'type' => ['sometimes', 'string', Rule::in(['barang', 'jasa'])],
             'category_id' => ['sometimes', 'integer'],
+            'q' => ['sometimes', 'string', 'max:100'],
         ]);
 
         $categoryId = isset($validated['category_id'])
@@ -38,7 +39,13 @@ class ItemController extends Controller
             : null;
 
         return ApiResponse::paginated(
-            $useCase($company, (int) ($validated['per_page'] ?? 15), $validated['type'] ?? null, $categoryId),
+            $useCase(
+                $company,
+                (int) ($validated['per_page'] ?? 15),
+                $validated['type'] ?? null,
+                $categoryId,
+                $validated['q'] ?? null,
+            ),
             'Daftar item.'
         );
     }

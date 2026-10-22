@@ -16,9 +16,9 @@ final class ListCustomers
     ) {}
 
     /** @return LengthAwarePaginator<int, CustomerDTO> */
-    public function __invoke(Company $company, int $perPage): LengthAwarePaginator
+    public function __invoke(Company $company, int $perPage, ?string $q = null): LengthAwarePaginator
     {
-        return $this->customers->paginateForCompany($company, $perPage)
+        return $this->customers->paginateForCompany($company, $perPage, $q)
             ->through(fn ($customer) => CustomerDTO::fromModel($customer));
     }
 }

@@ -29,13 +29,15 @@ class ServiceOrderController extends Controller
         $validated = $request->validate([
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'status' => ['sometimes', 'string', Rule::in(['baru', 'diproses', 'selesai', 'dibayar', 'dibatalkan'])],
+            'q' => ['sometimes', 'string', 'max:100'],
         ]);
 
         return ApiResponse::paginated(
             $useCase(
                 $this->scopedBranch($company, $branch, $branches),
                 (int) ($validated['per_page'] ?? 15),
-                $validated['status'] ?? null
+                $validated['status'] ?? null,
+                $validated['q'] ?? null,
             ),
             'Daftar order jasa.'
         );

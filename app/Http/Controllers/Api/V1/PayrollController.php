@@ -26,10 +26,17 @@ class PayrollController extends Controller
     {
         $validated = $request->validate([
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'q' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'active' => ['sometimes', 'boolean'],
         ]);
 
         return ApiResponse::paginated(
-            $useCase->list($company, (int) ($validated['per_page'] ?? 15)),
+            $useCase->list(
+                $company,
+                (int) ($validated['per_page'] ?? 15),
+                $validated['q'] ?? null,
+                isset($validated['active']) ? (bool) $validated['active'] : null,
+            ),
             'Daftar komponen gaji.'
         );
     }
@@ -69,10 +76,17 @@ class PayrollController extends Controller
     {
         $validated = $request->validate([
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'q' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'status' => ['sometimes', 'nullable', 'string', Rule::in(['draft', 'review', 'disetujui', 'dibayar'])],
         ]);
 
         return ApiResponse::paginated(
-            $payrolls->paginatePeriods($company, (int) ($validated['per_page'] ?? 15)),
+            $payrolls->paginatePeriods(
+                $company,
+                (int) ($validated['per_page'] ?? 15),
+                $validated['q'] ?? null,
+                $validated['status'] ?? null,
+            )->through(fn ($period) => PayrollPeriodDTO::fromModel($period)),
             'Daftar periode.'
         );
     }
@@ -124,7 +138,7 @@ class PayrollController extends Controller
         )->values();
 
         return ApiResponse::success([
-            'period' => $found,
+            'period' => PayrollPeriodDTO::fromModel($found),
             'employees' => $employees,
         ], 'Detail periode.');
     }

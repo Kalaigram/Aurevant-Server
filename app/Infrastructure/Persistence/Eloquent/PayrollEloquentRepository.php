@@ -13,10 +13,18 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 final class PayrollEloquentRepository implements PayrollRepositoryInterface
 {
-    public function paginatePeriods(Company $company, int $perPage): LengthAwarePaginator
-    {
+    public function paginatePeriods(
+        Company $company,
+        int $perPage,
+        ?string $q = null,
+        ?string $status = null,
+    ): LengthAwarePaginator {
+        $term = $q !== null && trim($q) !== '' ? '%'.trim($q).'%' : null;
+
         return PayrollPeriod::query()
             ->where('company_id', $company->id)
+            ->when($term !== null, fn ($query) => $query->where('name', 'like', $term))
+            ->when($status !== null && $status !== '', fn ($query) => $query->where('status', $status))
             ->orderByDesc('date_to')
             ->paginate($perPage);
     }

@@ -32,6 +32,14 @@ class CustomerTest extends TestCase
             'name' => 'Andi', 'phone' => '08111',
         ])->assertCreated()->assertJsonPath('data.name', 'Andi')->json('data.id');
 
+        $api()->getJson("/api/v1/companies/{$a->id}/customers?q=andi")
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.name', 'Andi');
+        $api()->getJson("/api/v1/companies/{$a->id}/customers?q=08111")
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1);
+
         // tanpa no HP boleh ganda
         $api()->postJson("/api/v1/companies/{$a->id}/customers", ['name' => 'Walk-in 1'])
             ->assertCreated();

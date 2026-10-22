@@ -11,7 +11,13 @@ use Illuminate\Pagination\LengthAwarePaginator;
 interface BranchRepositoryInterface
 {
     /** @return LengthAwarePaginator<int, Branch> */
-    public function paginateForCompany(Company $company, int $perPage): LengthAwarePaginator;
+    public function paginateForCompany(
+        Company $company,
+        int $perPage,
+        ?string $q = null,
+        ?string $type = null,
+        ?string $status = null,
+    ): LengthAwarePaginator;
 
     public function findForCompany(Company $company, int $id): ?Branch;
 

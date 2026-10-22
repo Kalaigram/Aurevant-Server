@@ -13,7 +13,7 @@ final class CategoryEloquentRepository implements CategoryRepositoryInterface
 {
     public function paginateForCompany(Company $company, int $perPage): LengthAwarePaginator
     {
-        return $company->categories()->orderBy('name')->paginate($perPage);
+        return $company->categories()->withCount('items')->orderBy('name')->paginate($perPage);
     }
 
     public function findForCompany(Company $company, int $id): ?Category

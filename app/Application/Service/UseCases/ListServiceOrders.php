@@ -16,9 +16,9 @@ final class ListServiceOrders
     ) {}
 
     /** @return LengthAwarePaginator<int, ServiceOrderDTO> */
-    public function __invoke(Branch $branch, int $perPage, ?string $status = null): LengthAwarePaginator
+    public function __invoke(Branch $branch, int $perPage, ?string $status = null, ?string $q = null): LengthAwarePaginator
     {
-        return $this->orders->paginateForBranch($branch, $perPage, $status)
+        return $this->orders->paginateForBranch($branch, $perPage, $status, $q)
             ->through(fn ($order) => ServiceOrderDTO::fromModel($order));
     }
 }

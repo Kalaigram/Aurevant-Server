@@ -12,10 +12,18 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 final class SalaryEloquentRepository implements SalaryRepositoryInterface
 {
-    public function paginateComponents(Company $company, int $perPage): LengthAwarePaginator
-    {
+    public function paginateComponents(
+        Company $company,
+        int $perPage,
+        ?string $q = null,
+        ?bool $active = null,
+    ): LengthAwarePaginator {
+        $term = $q !== null && trim($q) !== '' ? '%'.trim($q).'%' : null;
+
         return SalaryComponent::query()
             ->where('company_id', $company->id)
+            ->when($term !== null, fn ($query) => $query->where('name', 'like', $term))
+            ->when($active !== null, fn ($query) => $query->where('active', $active))
             ->orderBy('name')
             ->paginate($perPage);
     }

@@ -75,6 +75,12 @@ class ClosingTest extends TestCase
             'year' => $year, 'month' => $month,
         ])->assertOk()->assertJsonPath('data.status', 'tutup')->json('data.id');
 
+        $api()->getJson("{$base}/accounting-periods?status=tutup")->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.id', $periodId)
+            ->assertJsonPath('data.0.status', 'tutup');
+        $api()->getJson("{$base}/accounting-periods?status=buka")->assertOk()->assertJsonPath('meta.total', 0);
+
         // tutup ganda: tolak
         $api()->postJson("{$base}/accounting-periods/close", [
             'year' => $year, 'month' => $month,

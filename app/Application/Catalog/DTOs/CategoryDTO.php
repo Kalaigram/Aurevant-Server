@@ -12,6 +12,7 @@ final readonly class CategoryDTO
         public int $id,
         public int $companyId,
         public string $name,
+        public int $itemCount,
     ) {}
 
     public static function fromModel(Category $category): self
@@ -20,6 +21,7 @@ final readonly class CategoryDTO
             id: $category->id,
             companyId: $category->company_id,
             name: $category->name,
+            itemCount: (int) ($category->items_count ?? 0),
         );
     }
 }

@@ -24,10 +24,19 @@ class BranchController extends Controller
     {
         $validated = $request->validate([
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'q' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'type' => ['sometimes', 'nullable', 'string', Rule::in(['pusat', 'cabang', 'gudang'])],
+            'status' => ['sometimes', 'nullable', 'string', Rule::in(['aktif', 'nonaktif'])],
         ]);
 
         return ApiResponse::paginated(
-            $useCase($company, (int) ($validated['per_page'] ?? 15)),
+            $useCase(
+                $company,
+                (int) ($validated['per_page'] ?? 15),
+                $validated['q'] ?? null,
+                $validated['type'] ?? null,
+                $validated['status'] ?? null,
+            ),
             'Daftar cabang.'
         );
     }

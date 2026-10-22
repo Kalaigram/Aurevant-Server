@@ -78,6 +78,15 @@ class PayrollTest extends TestCase
             'name' => 'Oktober 2026', 'date_from' => '2026-10-01', 'date_to' => '2026-10-31', 'divisor' => 30,
         ])->assertCreated()->json('data.id');
 
+        $api()->getJson("{$base}/payroll-periods?q=oktober&status=draft")->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.id', $periodId)
+            ->assertJsonPath('data.0.from', '2026-10-01')
+            ->assertJsonPath('data.0.to', '2026-10-31');
+        $api()->getJson("{$base}/payroll-periods?status=dibayar")->assertOk()->assertJsonPath('meta.total', 0);
+        $api()->getJson("{$base}/payroll-periods/{$periodId}")->assertOk()
+            ->assertJsonPath('data.period.from', '2026-10-01');
+
         $hitung = $api()->postJson("{$base}/payroll-periods/{$periodId}/calculate")
             ->assertOk()->json('data');
         $this->assertEquals(4030000.0, $hitung['employees'][0]['net']);
@@ -134,6 +143,14 @@ class PayrollTest extends TestCase
         $id = $api()->postJson("{$base}/salary-components", [
             'name' => 'Lembur', 'calc_type' => 'manual',
         ])->assertCreated()->json('data.id');
+
+        $api()->getJson("{$base}/salary-components?q=lembur&active=1")->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.id', $id)
+            ->assertJsonPath('data.0.taxable', false)
+            ->assertJsonPath('data.0.bpjsBase', false)
+            ->assertJsonPath('data.0.active', true);
+        $api()->getJson("{$base}/salary-components?active=0")->assertOk()->assertJsonPath('meta.total', 0);
 
         $api()->postJson("{$base}/users/{$staff->id}/salary-components", [
             'component_id' => $id, 'amount' => 100000,

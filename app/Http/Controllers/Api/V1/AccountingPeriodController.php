@@ -19,10 +19,15 @@ class AccountingPeriodController extends Controller
     {
         $validated = $request->validate([
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'status' => ['sometimes', 'nullable', 'string', 'in:buka,tutup'],
         ]);
 
         return ApiResponse::paginated(
-            $useCase->list($company, (int) ($validated['per_page'] ?? 15)),
+            $useCase->list(
+                $company,
+                (int) ($validated['per_page'] ?? 15),
+                $validated['status'] ?? null,
+            ),
             'Periode akuntansi.'
         );
     }

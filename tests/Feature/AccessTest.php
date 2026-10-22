@@ -135,6 +135,15 @@ class AccessTest extends TestCase
         ])->assertNotFound();
 
         $api()->getJson("{$base}/assignments?active=1")->assertOk()->assertJsonPath('meta.total', 1);
+        $api()->getJson("{$base}/assignments?active=1&q=".urlencode($staff->name))->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.userName', $staff->name)
+            ->assertJsonPath('data.0.userEmail', $staff->email)
+            ->assertJsonPath('data.0.branchCode', 'TKO')
+            ->assertJsonPath('data.0.branchName', 'Toko');
+        $api()->getJson("{$base}/assignments?active=1&branch_id={$branch->id}&role_id={$roleId}")
+            ->assertOk()->assertJsonPath('meta.total', 1);
+        $api()->getJson("{$base}/assignments?active=1&q=tidak-ada")->assertOk()->assertJsonPath('meta.total', 0);
         $api()->postJson("{$base}/assignments/{$tugasId}/close", ['ended_at' => '2026-10-31'])
             ->assertOk()->assertJsonPath('data.endedAt', '2026-10-31');
         $api()->getJson("{$base}/assignments?active=1")->assertOk()->assertJsonPath('meta.total', 0);

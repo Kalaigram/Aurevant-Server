@@ -48,6 +48,28 @@ class BranchTest extends TestCase
         $this->assertEquals(['Cabang A1'], $response->json('data.*.name'));
     }
 
+    public function test_index_filter_pencarian_tipe_dan_status(): void
+    {
+        $user = $this->auth();
+        $company = Company::create(['name' => 'A', 'slug' => 'a', 'status' => 'aktif']);
+        $this->owner($user, $company);
+        Branch::create(['company_id' => $company->id, 'code' => 'PST', 'name' => 'Pusat', 'type' => 'pusat', 'status' => 'aktif']);
+        Branch::create(['company_id' => $company->id, 'code' => 'GDG', 'name' => 'Gudang Ciledug', 'type' => 'gudang', 'status' => 'nonaktif', 'address' => 'Ciledug']);
+        Branch::create(['company_id' => $company->id, 'code' => 'SBY', 'name' => 'Cabang Surabaya', 'type' => 'cabang', 'status' => 'aktif']);
+
+        $api = fn () => $this->actingAs($user, 'sanctum');
+        $base = "/api/v1/companies/{$company->id}/branches";
+
+        $api()->getJson("{$base}?q=ciledug")->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.code', 'GDG');
+        $api()->getJson("{$base}?type=cabang")->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.code', 'SBY');
+        $api()->getJson("{$base}?status=aktif")->assertOk()->assertJsonPath('meta.total', 2);
+        $api()->getJson("{$base}?type=gudang&status=aktif")->assertOk()->assertJsonPath('meta.total', 0);
+    }
+
     public function test_store_dan_validasi(): void
     {
         $user = $this->auth();

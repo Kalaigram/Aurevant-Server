@@ -11,10 +11,16 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 final class SupplierEloquentRepository implements SupplierRepositoryInterface
 {
-    public function paginateForCompany(Company $company, int $perPage): LengthAwarePaginator
+    public function paginateForCompany(Company $company, int $perPage, ?string $q = null): LengthAwarePaginator
     {
         return Supplier::query()
             ->where('company_id', $company->id)
+            ->when($q !== null && $q !== '', function ($query) use ($q) {
+                $like = '%'.$q.'%';
+                $query->where(fn ($supplier) => $supplier
+                    ->where('name', 'like', $like)
+                    ->orWhere('phone', 'like', $like));
+            })
             ->orderBy('name')
             ->paginate($perPage);
     }

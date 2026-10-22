@@ -11,13 +11,30 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 final class AssignmentEloquentRepository implements AssignmentRepositoryInterface
 {
-    public function paginateForCompany(Company $company, int $perPage, ?int $userId = null, bool $activeOnly = false): LengthAwarePaginator
-    {
+    public function paginateForCompany(
+        Company $company,
+        int $perPage,
+        ?int $userId = null,
+        bool $activeOnly = false,
+        ?string $q = null,
+        ?int $branchId = null,
+        ?int $roleId = null,
+    ): LengthAwarePaginator {
+        $term = $q !== null && trim($q) !== '' ? '%'.trim($q).'%' : null;
+
         return EmployeeAssignment::query()
             ->with(['user', 'branch', 'role'])
             ->where('company_id', $company->id)
             ->when($userId !== null, fn ($query) => $query->where('user_id', $userId))
             ->when($activeOnly, fn ($query) => $query->whereNull('ended_at'))
+            ->when($term !== null, function ($query) use ($term): void {
+                $query->whereHas('user', function ($user) use ($term): void {
+                    $user->where('name', 'like', $term)
+                        ->orWhere('email', 'like', $term);
+                });
+            })
+            ->when($branchId !== null, fn ($query) => $query->where('branch_id', $branchId))
+            ->when($roleId !== null, fn ($query) => $query->where('role_id', $roleId))
             ->orderByDesc('started_at')
             ->paginate($perPage);
     }

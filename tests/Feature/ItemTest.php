@@ -59,7 +59,12 @@ class ItemTest extends TestCase
         $jasaId = $api()->postJson("/api/v1/companies/{$company->id}/items", [
             'code' => 'SVC-01', 'name' => 'Servis Ringan', 'type' => 'jasa',
             'duration_minutes' => 60, 'track_stock' => false,
-        ])->assertCreated()->assertJsonPath('data.trackStock', false)->json('data.id');
+            'commission_type' => 'persen', 'commission_value' => 10,
+        ])->assertCreated()
+            ->assertJsonPath('data.trackStock', false)
+            ->assertJsonPath('data.commissionType', 'persen')
+            ->assertJsonPath('data.commissionValue', '10.00')
+            ->json('data.id');
 
         // kode duplikat satu company: tolak
         $api()->postJson("/api/v1/companies/{$company->id}/items", [
@@ -68,12 +73,24 @@ class ItemTest extends TestCase
 
         // filter type
         $response = $api()->getJson("/api/v1/companies/{$company->id}/items?type=jasa");
-        $response->assertOk()->assertJsonPath('meta.total', 1);
+        $response->assertOk()->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.commissionType', 'persen');
         $this->assertEquals(['Servis Ringan'], $response->json('data.*.name'));
 
         // filter kategori
         $api()->getJson("/api/v1/companies/{$company->id}/items?category_id={$category->id}")
             ->assertOk()->assertJsonPath('meta.total', 1);
+
+        // pencarian kode/nama + nama kategori ikut dikirim
+        $cari = $api()->getJson("/api/v1/companies/{$company->id}/items?q=oli")
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1);
+        $this->assertSame('Sparepart', $cari->json('data.0.categoryName'));
+
+        // jumlah item per kategori ikut dikirim
+        $api()->getJson("/api/v1/companies/{$company->id}/categories")
+            ->assertOk()
+            ->assertJsonPath('data.0.itemCount', 1);
 
         // update + hapus
         $api()->putJson("/api/v1/companies/{$company->id}/items/{$barangId}", [

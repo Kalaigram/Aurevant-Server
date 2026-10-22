@@ -17,10 +17,11 @@ use Illuminate\Validation\ValidationException;
 final class ClosePeriod
 {
     /** @return LengthAwarePaginator<int, AccountingPeriodDTO> */
-    public function list(Company $company, int $perPage): LengthAwarePaginator
+    public function list(Company $company, int $perPage, ?string $status = null): LengthAwarePaginator
     {
         return AccountingPeriod::query()
             ->where('company_id', $company->id)
+            ->when($status !== null && $status !== '', fn ($query) => $query->where('status', $status))
             ->orderByDesc('year')
             ->orderByDesc('month')
             ->paginate($perPage)

@@ -16,9 +16,23 @@ final class ListAssignments
     ) {}
 
     /** @return LengthAwarePaginator<int, AssignmentDTO> */
-    public function __invoke(Company $company, int $perPage, ?int $userId, bool $activeOnly): LengthAwarePaginator
-    {
-        return $this->assignments->paginateForCompany($company, $perPage, $userId, $activeOnly)
-            ->through(fn ($assignment) => AssignmentDTO::fromModel($assignment));
+    public function __invoke(
+        Company $company,
+        int $perPage,
+        ?int $userId,
+        bool $activeOnly,
+        ?string $q = null,
+        ?int $branchId = null,
+        ?int $roleId = null,
+    ): LengthAwarePaginator {
+        return $this->assignments->paginateForCompany(
+            $company,
+            $perPage,
+            $userId,
+            $activeOnly,
+            $q,
+            $branchId,
+            $roleId,
+        )->through(fn ($assignment) => AssignmentDTO::fromModel($assignment));
     }
 }

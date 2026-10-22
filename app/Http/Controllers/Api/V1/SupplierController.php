@@ -24,10 +24,11 @@ class SupplierController extends Controller
     {
         $validated = $request->validate([
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'q' => ['sometimes', 'string', 'max:100'],
         ]);
 
         return ApiResponse::paginated(
-            $useCase($company, (int) ($validated['per_page'] ?? 15)),
+            $useCase($company, (int) ($validated['per_page'] ?? 15), $validated['q'] ?? null),
             'Daftar supplier.'
         );
     }

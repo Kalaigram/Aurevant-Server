@@ -16,9 +16,14 @@ final class ListBranches
     ) {}
 
     /** @return LengthAwarePaginator<int, BranchDTO> */
-    public function __invoke(Company $company, int $perPage): LengthAwarePaginator
-    {
-        return $this->branches->paginateForCompany($company, $perPage)
+    public function __invoke(
+        Company $company,
+        int $perPage,
+        ?string $q = null,
+        ?string $type = null,
+        ?string $status = null,
+    ): LengthAwarePaginator {
+        return $this->branches->paginateForCompany($company, $perPage, $q, $type, $status)
             ->through(fn ($branch) => BranchDTO::fromModel($branch));
     }
 }

@@ -24,6 +24,9 @@ class AssignmentController extends Controller
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'user_id' => ['sometimes', 'integer'],
             'active' => ['sometimes', 'boolean'],
+            'q' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'branch_id' => ['sometimes', 'integer'],
+            'role_id' => ['sometimes', 'integer'],
         ]);
 
         return ApiResponse::paginated(
@@ -32,6 +35,9 @@ class AssignmentController extends Controller
                 (int) ($validated['per_page'] ?? 15),
                 isset($validated['user_id']) ? (int) $validated['user_id'] : null,
                 (bool) ($validated['active'] ?? false),
+                $validated['q'] ?? null,
+                isset($validated['branch_id']) ? (int) $validated['branch_id'] : null,
+                isset($validated['role_id']) ? (int) $validated['role_id'] : null,
             ),
             'Daftar penempatan.'
         );

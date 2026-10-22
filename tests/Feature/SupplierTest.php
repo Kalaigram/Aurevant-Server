@@ -34,6 +34,10 @@ class SupplierTest extends TestCase
 
         $api()->getJson("/api/v1/companies/{$a->id}/suppliers")
             ->assertOk()->assertJsonPath('meta.total', 1);
+        $api()->getJson("/api/v1/companies/{$a->id}/suppliers?q=makmur")
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.name', 'PT Sumber Makmur');
 
         $api()->postJson("/api/v1/companies/{$a->id}/suppliers", ['name' => 'PT Sumber Makmur'])
             ->assertUnprocessable()->assertJsonValidationErrors('name');

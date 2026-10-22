@@ -11,10 +11,16 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 final class CustomerEloquentRepository implements CustomerRepositoryInterface
 {
-    public function paginateForCompany(Company $company, int $perPage): LengthAwarePaginator
+    public function paginateForCompany(Company $company, int $perPage, ?string $q = null): LengthAwarePaginator
     {
         return Customer::query()
             ->where('company_id', $company->id)
+            ->when($q !== null && $q !== '', function ($query) use ($q) {
+                $like = '%'.$q.'%';
+                $query->where(fn ($customer) => $customer
+                    ->where('name', 'like', $like)
+                    ->orWhere('phone', 'like', $like));
+            })
             ->orderBy('name')
             ->paginate($perPage);
     }

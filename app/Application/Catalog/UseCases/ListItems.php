@@ -16,9 +16,9 @@ final class ListItems
     ) {}
 
     /** @return LengthAwarePaginator<int, ItemDTO> */
-    public function __invoke(Company $company, int $perPage, ?string $type = null, ?int $categoryId = null): LengthAwarePaginator
+    public function __invoke(Company $company, int $perPage, ?string $type = null, ?int $categoryId = null, ?string $q = null): LengthAwarePaginator
     {
-        return $this->items->paginateForCompany($company, $perPage, $type, $categoryId)
+        return $this->items->paginateForCompany($company, $perPage, $type, $categoryId, $q)
             ->through(fn ($item) => ItemDTO::fromModel($item));
     }
 }

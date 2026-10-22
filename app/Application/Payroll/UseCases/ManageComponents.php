@@ -17,9 +17,13 @@ final class ManageComponents
     ) {}
 
     /** @return LengthAwarePaginator<int, SalaryComponentDTO> */
-    public function list(Company $company, int $perPage): LengthAwarePaginator
-    {
-        return $this->salaries->paginateComponents($company, $perPage)
+    public function list(
+        Company $company,
+        int $perPage,
+        ?string $q = null,
+        ?bool $active = null,
+    ): LengthAwarePaginator {
+        return $this->salaries->paginateComponents($company, $perPage, $q, $active)
             ->through(fn ($component) => SalaryComponentDTO::fromModel($component));
     }
 

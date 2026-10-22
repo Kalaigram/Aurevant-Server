@@ -16,9 +16,9 @@ final class ListSuppliers
     ) {}
 
     /** @return LengthAwarePaginator<int, SupplierDTO> */
-    public function __invoke(Company $company, int $perPage): LengthAwarePaginator
+    public function __invoke(Company $company, int $perPage, ?string $q = null): LengthAwarePaginator
     {
-        return $this->suppliers->paginateForCompany($company, $perPage)
+        return $this->suppliers->paginateForCompany($company, $perPage, $q)
             ->through(fn ($supplier) => SupplierDTO::fromModel($supplier));
     }
 }

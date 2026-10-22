@@ -11,7 +11,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 interface SupplierRepositoryInterface
 {
     /** @return LengthAwarePaginator<int, Supplier> */
-    public function paginateForCompany(Company $company, int $perPage): LengthAwarePaginator;
+    public function paginateForCompany(Company $company, int $perPage, ?string $q = null): LengthAwarePaginator;
 
     public function findForCompany(Company $company, int $id): ?Supplier;
 

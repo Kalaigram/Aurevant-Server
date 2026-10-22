@@ -13,6 +13,9 @@ final readonly class SalaryComponentDTO
         public string $name,
         public string $calcType,
         public bool $deductible,
+        public bool $taxable,
+        public bool $bpjsBase,
+        public bool $active,
     ) {}
 
     public static function fromModel(SalaryComponent $component): self
@@ -22,6 +25,9 @@ final readonly class SalaryComponentDTO
             name: $component->name,
             calcType: $component->calc_type,
             deductible: (bool) $component->deductible,
+            taxable: (bool) $component->taxable,
+            bpjsBase: (bool) $component->bpjs_base,
+            active: (bool) $component->active,
         );
     }
 }

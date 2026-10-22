@@ -12,7 +12,12 @@ use Illuminate\Pagination\LengthAwarePaginator;
 interface SalaryRepositoryInterface
 {
     /** @return LengthAwarePaginator<int, SalaryComponent> */
-    public function paginateComponents(Company $company, int $perPage): LengthAwarePaginator;
+    public function paginateComponents(
+        Company $company,
+        int $perPage,
+        ?string $q = null,
+        ?bool $active = null,
+    ): LengthAwarePaginator;
 
     public function createComponent(Company $company, array $attributes): SalaryComponent;
 

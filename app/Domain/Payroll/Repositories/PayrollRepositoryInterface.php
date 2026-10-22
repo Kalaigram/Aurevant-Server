@@ -13,7 +13,12 @@ use Illuminate\Pagination\LengthAwarePaginator;
 interface PayrollRepositoryInterface
 {
     /** @return LengthAwarePaginator<int, PayrollPeriod> */
-    public function paginatePeriods(Company $company, int $perPage): LengthAwarePaginator;
+    public function paginatePeriods(
+        Company $company,
+        int $perPage,
+        ?string $q = null,
+        ?string $status = null,
+    ): LengthAwarePaginator;
 
     /** @return LengthAwarePaginator<int, PayrollPeriod> */
     public function paginatePeriodsForUser(Company $company, User $user, int $perPage): LengthAwarePaginator;

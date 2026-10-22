@@ -11,9 +11,27 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 final class BranchEloquentRepository implements BranchRepositoryInterface
 {
-    public function paginateForCompany(Company $company, int $perPage): LengthAwarePaginator
-    {
-        return $company->branches()->orderBy('code')->paginate($perPage);
+    public function paginateForCompany(
+        Company $company,
+        int $perPage,
+        ?string $q = null,
+        ?string $type = null,
+        ?string $status = null,
+    ): LengthAwarePaginator {
+        $term = $q !== null && trim($q) !== '' ? '%'.trim($q).'%' : null;
+
+        return $company->branches()
+            ->when($term !== null, function ($query) use ($term): void {
+                $query->where(function ($nested) use ($term): void {
+                    $nested->where('name', 'like', $term)
+                        ->orWhere('code', 'like', $term)
+                        ->orWhere('address', 'like', $term);
+                });
+            })
+            ->when($type !== null && $type !== '', fn ($query) => $query->where('type', $type))
+            ->when($status !== null && $status !== '', fn ($query) => $query->where('status', $status))
+            ->orderBy('code')
+            ->paginate($perPage);
     }
 
     public function findForCompany(Company $company, int $id): ?Branch

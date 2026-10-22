@@ -71,7 +71,11 @@ class ServiceOrderTest extends TestCase
             'customer_id' => $customer->id,
             'items' => [['item_id' => $servis->id, 'qty' => 1]],
             'note' => 'Motor beat',
-        ])->assertCreated()->assertJsonPath('data.status', 'baru')->json('data.id');
+        ])->assertCreated()
+            ->assertJsonPath('data.status', 'baru')
+            ->assertJsonPath('data.customerName', 'Pak Dudi')
+            ->assertJsonPath('data.items.0.itemName', 'Servis Ringan')
+            ->json('data.id');
 
         // barang tidak boleh masuk order jasa
         $api()->postJson($base, [
@@ -107,6 +111,37 @@ class ServiceOrderTest extends TestCase
         $this->assertEquals(['dp', 'tunai'], $methods);
 
         $api()->getJson("{$base}/{$id}")->assertJsonPath('data.status', 'dibayar');
+    }
+
+    public function test_daftar_order_jasa_memuat_nama_dan_filter_q(): void
+    {
+        [$user, $teknisi, $company, $branch, $customer, $servis, $oli] = $this->setupWorld();
+        $api = fn () => $this->actingAs($user, 'sanctum');
+        $base = "/api/v1/companies/{$company->id}/branches/{$branch->id}/service-orders";
+
+        $id = $api()->postJson($base, [
+            'customer_id' => $customer->id,
+            'items' => [['item_id' => $servis->id, 'qty' => 1]],
+        ])->assertCreated()->json('data.id');
+
+        $lain = Customer::create([
+            'company_id' => $company->id, 'name' => 'Bu Sari', 'phone' => '08222',
+        ]);
+        $api()->postJson($base, [
+            'customer_id' => $lain->id,
+            'items' => [['item_id' => $servis->id, 'qty' => 2]],
+        ])->assertCreated();
+
+        $page = $api()->getJson("{$base}?q=Dudi")->assertOk()->json();
+        $this->assertSame(1, $page['meta']['total']);
+        $this->assertSame($id, $page['data'][0]['id']);
+        $this->assertSame('Pak Dudi', $page['data'][0]['customerName']);
+        $this->assertSame('Servis Ringan', $page['data'][0]['items'][0]['itemName']);
+        $this->assertSame('100000.00', $page['data'][0]['total']);
+
+        $page = $api()->getJson("{$base}?q=Sari")->assertOk()->json();
+        $this->assertSame(1, $page['meta']['total']);
+        $this->assertSame('Bu Sari', $page['data'][0]['customerName']);
     }
 
     public function test_transisi_salah_dp_lebih_dan_guest(): void
