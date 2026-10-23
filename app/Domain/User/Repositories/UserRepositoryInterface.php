@@ -13,4 +13,7 @@ interface UserRepositoryInterface
     public function findByPhone(string $phone): ?User;
 
     public function create(array $attributes): User;
+
+    /** @param array<string, mixed> $attributes */
+    public function update(User $user, array $attributes): User;
 }

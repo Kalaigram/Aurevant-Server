@@ -47,8 +47,15 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::get('/auth/me', [AuthController::class, 'me']);
         Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
+        Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
+        Route::post('/auth/avatar', [AuthController::class, 'uploadAvatar']);
+        Route::delete('/auth/avatar', [AuthController::class, 'deleteAvatar']);
         Route::get('/companies', [CompanyController::class, 'index']);
         Route::post('/companies', [CompanyController::class, 'store']);
+        Route::get('/companies/{company}/profile', [CompanyController::class, 'show']);
+        Route::put('/companies/{company}/profile', [CompanyController::class, 'update'])->middleware('permission:pengaturan.kelola');
+        Route::post('/companies/{company}/logo', [CompanyController::class, 'uploadLogo'])->middleware('permission:pengaturan.kelola');
+        Route::delete('/companies/{company}/logo', [CompanyController::class, 'deleteLogo'])->middleware('permission:pengaturan.kelola');
         Route::get('/companies/{company}/branches', [BranchController::class, 'index']);
         Route::post('/companies/{company}/branches', [BranchController::class, 'store'])->middleware('permission:cabang.kelola');
         Route::get('/companies/{company}/branches/{branch}', [BranchController::class, 'show']);

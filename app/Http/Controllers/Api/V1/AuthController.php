@@ -6,14 +6,18 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Application\Auth\DTOs\UserDTO;
 use App\Application\Auth\UseCases\ChangePassword;
+use App\Application\Auth\UseCases\DeleteUserAvatar;
 use App\Application\Auth\UseCases\LoginUser;
 use App\Application\Auth\UseCases\RegisterUser;
 use App\Application\Auth\UseCases\RequestPasswordReset;
 use App\Application\Auth\UseCases\ResetPassword;
+use App\Application\Auth\UseCases\StoreUserAvatar;
+use App\Application\Auth\UseCases\UpdateOwnProfile;
 use App\Http\Controllers\Controller;
 use App\Shared\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
@@ -59,6 +63,33 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         return ApiResponse::success(UserDTO::fromModel($request->user()), 'Profil saya.');
+    }
+
+    public function updateProfile(Request $request, UpdateOwnProfile $useCase): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'phone' => [
+                'nullable', 'string', 'max:30',
+                Rule::unique('users', 'phone')->ignore($request->user()->id),
+            ],
+        ]);
+
+        return ApiResponse::success($useCase($request->user(), $validated), 'Profil diperbarui.');
+    }
+
+    public function uploadAvatar(Request $request, StoreUserAvatar $useCase): JsonResponse
+    {
+        $validated = $request->validate([
+            'avatar' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ]);
+
+        return ApiResponse::success($useCase($request->user(), $validated['avatar']), 'Foto profil diperbarui.');
+    }
+
+    public function deleteAvatar(Request $request, DeleteUserAvatar $useCase): JsonResponse
+    {
+        return ApiResponse::success($useCase($request->user()), 'Foto profil dihapus.');
     }
 
     public function forgotPassword(Request $request, RequestPasswordReset $useCase): JsonResponse

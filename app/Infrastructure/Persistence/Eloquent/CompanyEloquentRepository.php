@@ -26,8 +26,20 @@ final class CompanyEloquentRepository implements CompanyRepositoryInterface
         return Company::query()->where('slug', $slug)->first();
     }
 
+    public function findById(int $id): ?Company
+    {
+        return Company::query()->find($id);
+    }
+
     public function create(array $attributes): Company
     {
         return Company::query()->create($attributes);
+    }
+
+    public function update(Company $company, array $attributes): Company
+    {
+        $company->update($attributes);
+
+        return $company->refresh();
     }
 }

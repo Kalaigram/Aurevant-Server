@@ -18,5 +18,10 @@ interface CompanyRepositoryInterface
 
     public function findBySlug(string $slug): ?Company;
 
+    public function findById(int $id): ?Company;
+
     public function create(array $attributes): Company;
+
+    /** @param array<string, mixed> $attributes */
+    public function update(Company $company, array $attributes): Company;
 }

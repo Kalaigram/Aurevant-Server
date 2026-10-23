@@ -13,6 +13,7 @@ final readonly class AssignmentDTO
         public int $userId,
         public ?string $userName,
         public ?string $userEmail,
+        public ?string $userAvatarUrl,
         public ?int $branchId,
         public ?string $branchCode,
         public ?string $branchName,
@@ -29,6 +30,9 @@ final readonly class AssignmentDTO
             userId: $assignment->user_id,
             userName: $assignment->relationLoaded('user') ? $assignment->user?->name : null,
             userEmail: $assignment->relationLoaded('user') ? $assignment->user?->email : null,
+            userAvatarUrl: $assignment->relationLoaded('user') && $assignment->user?->avatar_path !== null
+                ? '/storage/'.ltrim((string) $assignment->user?->avatar_path, '/')
+                : null,
             branchId: $assignment->branch_id,
             branchCode: $assignment->relationLoaded('branch') ? $assignment->branch?->code : null,
             branchName: $assignment->relationLoaded('branch') ? $assignment->branch?->name : null,

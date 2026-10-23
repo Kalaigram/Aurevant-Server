@@ -23,4 +23,11 @@ final class UserEloquentRepository implements UserRepositoryInterface
     {
         return User::query()->create($attributes);
     }
+
+    public function update(User $user, array $attributes): User
+    {
+        $user->update($attributes);
+
+        return $user->refresh();
+    }
 }
