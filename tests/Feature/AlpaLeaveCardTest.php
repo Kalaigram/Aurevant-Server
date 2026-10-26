@@ -27,6 +27,7 @@ class AlpaLeaveCardTest extends TestCase
         $company = Company::create(['name' => 'PT A', 'slug' => 'pt-a', 'status' => 'aktif']);
         $this->owner($owner, $company);
         $branch = Branch::create(['company_id' => $company->id, 'code' => 'TKO', 'name' => 'Toko']);
+        $this->member($staff, $company, $branch->id);
         $shift = WorkShift::create([
             'company_id' => $company->id, 'name' => 'Pagi',
             'starts_at' => '08:00', 'ends_at' => '16:00',
@@ -171,5 +172,36 @@ class AlpaLeaveCardTest extends TestCase
             ->assertOk();
         $this->assertStringStartsWith('image/svg', $qr->headers->get('Content-Type'));
         $this->assertStringContainsString('<svg', $qr->getContent());
+    }
+
+    public function test_pii_cuti_dan_kartu_dibatasi(): void
+    {
+        [$owner, $staff, $company, $branch] = $this->setupWorld();
+        $lain = User::factory()->create();
+        $this->member($lain, $company, $branch->id);
+        $base = "/api/v1/companies/{$company->id}";
+
+        foreach ([$staff, $lain] as $karyawan) {
+            $this->actingAs($owner, 'sanctum')->postJson(
+                "{$base}/users/{$karyawan->id}/leaves",
+                ['type' => 'cuti', 'from_date' => '2026-10-19', 'to_date' => '2026-10-20', 'reason' => 'Keluarga']
+            )->assertCreated();
+        }
+
+        $milikSendiri = $this->actingAs($staff, 'sanctum')->getJson("{$base}/leaves")
+            ->assertOk()->json();
+        $this->assertSame(1, $milikSendiri['meta']['total']);
+        $this->assertSame($staff->id, $milikSendiri['data'][0]['userId']);
+
+        $this->actingAs($staff, 'sanctum')->getJson("{$base}/leaves?user_id={$lain->id}")
+            ->assertForbidden();
+
+        $semua = $this->actingAs($owner, 'sanctum')->getJson("{$base}/leaves")
+            ->assertOk()->json();
+        $this->assertSame(2, $semua['meta']['total']);
+
+        $this->actingAs($staff, 'sanctum')->getJson("{$base}/users/{$staff->id}/card")->assertOk();
+        $this->actingAs($staff, 'sanctum')->getJson("{$base}/users/{$lain->id}/card")->assertForbidden();
+        $this->actingAs($owner, 'sanctum')->getJson("{$base}/users/{$lain->id}/card")->assertOk();
     }
 }

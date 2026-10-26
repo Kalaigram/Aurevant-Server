@@ -55,6 +55,8 @@ class AccessRoleController extends Controller
 
     public function index(Request $request, Company $company, ListRoles $useCase): JsonResponse
     {
+        $this->guardAccessRead($request);
+
         $validated = $request->validate([
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ]);
@@ -84,8 +86,10 @@ class AccessRoleController extends Controller
         );
     }
 
-    public function show(Company $company, int $role, RoleRepositoryInterface $roles): JsonResponse
+    public function show(Request $request, Company $company, int $role, RoleRepositoryInterface $roles): JsonResponse
     {
+        $this->guardAccessRead($request);
+
         return ApiResponse::success(
             RoleDTO::fromModel($this->scoped($company, $role, $roles)),
             'Detail role.'
@@ -133,6 +137,15 @@ class AccessRoleController extends Controller
         $useCase->revoke($company, $user, $role);
 
         return ApiResponse::success(null, 'Role dicabut.');
+    }
+
+    private function guardAccessRead(Request $request): void
+    {
+        $actor = $request->user();
+
+        if (! $actor->is_super_admin && ! $actor->can('karyawan.kelola') && ! $actor->can('pengaturan.kelola')) {
+            abort(403, 'Akses ditolak.');
+        }
     }
 
     private function scoped(Company $company, int $id, RoleRepositoryInterface $roles): Role

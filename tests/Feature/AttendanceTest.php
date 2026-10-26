@@ -31,6 +31,7 @@ class AttendanceTest extends TestCase
             'company_id' => $company->id, 'code' => 'TKO', 'name' => 'Toko',
             'latitude' => -6.1754, 'longitude' => 106.8272, 'radius_m' => 100,
         ]);
+        $this->member($staff, $company, $branch->id);
 
         return [$owner, $staff, $company, $branch];
     }
@@ -220,6 +221,7 @@ class AttendanceTest extends TestCase
 
         // user tanpa pola: tidak ada jadwal
         $magang = User::factory()->create();
+        $this->member($magang, $company, $branch->id);
         $this->actingAs($magang, 'sanctum')->postJson("{$base}/clock-in", [
             'branch_id' => $branch->id,
             'qr_token' => $this->qr($magang, $company, $branch),

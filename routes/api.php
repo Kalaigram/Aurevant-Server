@@ -37,13 +37,13 @@ use App\Http\Controllers\Api\V1\SupplierController;
 use App\Http\Controllers\Api\V1\TenantController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(function (): void {
+Route::middleware(['throttle:api'])->prefix('v1')->group(function (): void {
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
     Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:6,1');
     Route::post('/auth/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:6,1');
 
-    Route::middleware(['auth:sanctum', 'scope.cabang', 'subscription.aktif'])->group(function (): void {
+    Route::middleware(['auth:sanctum', 'company.team', 'scope.cabang', 'subscription.aktif'])->group(function (): void {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::get('/auth/me', [AuthController::class, 'me']);
         Route::post('/auth/change-password', [AuthController::class, 'changePassword']);

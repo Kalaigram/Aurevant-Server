@@ -30,11 +30,25 @@ class LeaveController extends Controller
             'status' => ['sometimes', 'string', Rule::in(['diajukan', 'disetujui', 'ditolak'])],
         ]);
 
+        $actor = $request->user();
+        $canSeeAll = $actor->is_super_admin
+            || $actor->can('absensi.approve')
+            || $actor->can('karyawan.kelola');
+        $userId = isset($validated['user_id']) ? (int) $validated['user_id'] : null;
+
+        if (! $canSeeAll) {
+            if ($userId !== null && $userId !== $actor->id) {
+                abort(403, 'Akses ditolak.');
+            }
+
+            $userId = $actor->id;
+        }
+
         return ApiResponse::paginated(
             $useCase(
                 $company,
                 (int) ($validated['per_page'] ?? 15),
-                isset($validated['user_id']) ? (int) $validated['user_id'] : null,
+                $userId,
                 $validated['status'] ?? null,
             ),
             'Daftar pengajuan.'
@@ -88,13 +102,17 @@ class LeaveController extends Controller
         );
     }
 
-    public function card(Company $company, User $user, EmployeeCard $useCase): JsonResponse
+    public function card(Request $request, Company $company, User $user, EmployeeCard $useCase): JsonResponse
     {
+        $this->guardCard($request, $user);
+
         return ApiResponse::success($useCase($company, $user), 'Kartu karyawan.');
     }
 
-    public function cardQr(Company $company, User $user, EmployeeCard $useCase)
+    public function cardQr(Request $request, Company $company, User $user, EmployeeCard $useCase)
     {
+        $this->guardCard($request, $user);
+
         $card = $useCase($company, $user);
 
         return response(
@@ -102,5 +120,14 @@ class LeaveController extends Controller
             200,
             ['Content-Type' => 'image/svg+xml']
         );
+    }
+
+    private function guardCard(Request $request, User $user): void
+    {
+        $actor = $request->user();
+
+        if ($actor->id !== $user->id && ! $actor->is_super_admin && ! $actor->can('karyawan.kelola')) {
+            abort(403, 'Akses ditolak.');
+        }
     }
 }

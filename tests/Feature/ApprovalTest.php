@@ -40,6 +40,7 @@ class ApprovalTest extends TestCase
         $kasir = User::factory()->create();
         $kasir->assignRole($kasirRole);
         $kasir = $kasir->fresh();
+        $this->member($kasir, $company, $branch->id);
 
         $jasa = Item::create([
             'company_id' => $company->id, 'code' => 'JASA-01', 'name' => 'Servis',

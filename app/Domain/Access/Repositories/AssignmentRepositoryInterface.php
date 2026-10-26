@@ -6,6 +6,7 @@ namespace App\Domain\Access\Repositories;
 
 use App\Models\Company;
 use App\Models\EmployeeAssignment;
+use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 interface AssignmentRepositoryInterface
@@ -26,4 +27,8 @@ interface AssignmentRepositoryInterface
     public function create(Company $company, array $attributes): EmployeeAssignment;
 
     public function save(EmployeeAssignment $assignment): EmployeeAssignment;
+
+    public function hasOtherActiveWithRole(Company $company, int $assignmentId, int $roleId): bool;
+
+    public function hasAnyActiveForUser(User $user): bool;
 }

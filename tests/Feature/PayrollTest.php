@@ -31,6 +31,7 @@ class PayrollTest extends TestCase
         $company = Company::create(['name' => 'PT A', 'slug' => 'pt-a', 'status' => 'aktif']);
         $this->owner($owner, $company);
         $branch = Branch::create(['company_id' => $company->id, 'code' => 'TKO', 'name' => 'Toko']);
+        $this->member($staff, $company, $branch->id);
 
         $ids = [];
         foreach ([
@@ -164,8 +165,9 @@ class PayrollTest extends TestCase
 
     public function test_slip_milik_sendiri_dan_izin(): void
     {
-        [$owner, $staff, $company] = $this->setupWorld();
+        [$owner, $staff, $company, $branch] = $this->setupWorld();
         $manajer = User::factory()->create();
+        $this->member($manajer, $company, $branch->id);
         $base = "/api/v1/companies/{$company->id}";
 
         $periodId = $this->actingAs($owner, 'sanctum')->postJson("{$base}/payroll-periods", [

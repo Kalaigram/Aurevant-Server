@@ -5,16 +5,13 @@ declare(strict_types=1);
 namespace App\Domain\Company\Repositories;
 
 use App\Models\Company;
+use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
 
 interface CompanyRepositoryInterface
 {
-    /** @return Collection<int, Company> */
-    public function all(): Collection;
-
     /** @return LengthAwarePaginator<int, Company> */
-    public function paginate(int $perPage): LengthAwarePaginator;
+    public function paginateForUser(User $user, int $perPage): LengthAwarePaginator;
 
     public function findBySlug(string $slug): ?Company;
 

@@ -8,6 +8,7 @@ use App\Domain\Access\Services\PermissionCatalog;
 use App\Domain\Access\Services\RoleTemplates;
 use App\Domain\Billing\Repositories\SubscriptionRepositoryInterface;
 use App\Models\Company;
+use App\Models\EmployeeAssignment;
 use App\Models\User;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -29,8 +30,34 @@ trait WithPermissions
         $role->syncPermissions(RoleTemplates::permissionsFor('Pemilik', PermissionCatalog::all()));
         $user->assignRole($role);
 
+        $hasActiveAssignment = EmployeeAssignment::query()
+            ->where('user_id', $user->id)
+            ->where('company_id', $company->id)
+            ->whereNull('ended_at')
+            ->exists();
+
+        if (! $hasActiveAssignment) {
+            EmployeeAssignment::create([
+                'user_id' => $user->id,
+                'company_id' => $company->id,
+                'branch_id' => null,
+                'role_id' => $role->id,
+                'started_at' => now()->toDateString(),
+            ]);
+        }
+
         app(SubscriptionRepositoryInterface::class)->startTrial($company);
 
         return $user->fresh();
+    }
+
+    protected function member(User $user, Company $company, ?int $branchId = null): EmployeeAssignment
+    {
+        return EmployeeAssignment::create([
+            'user_id' => $user->id,
+            'company_id' => $company->id,
+            'branch_id' => $branchId,
+            'started_at' => now()->toDateString(),
+        ]);
     }
 }

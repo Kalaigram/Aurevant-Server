@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Application\Access\UseCases;
 
 use App\Application\Access\DTOs\AssignmentDTO;
+use App\Application\Audit\Audit;
 use App\Domain\Access\Repositories\AssignmentRepositoryInterface;
 use App\Domain\Access\Repositories\RoleRepositoryInterface;
 use App\Domain\Branch\Repositories\BranchRepositoryInterface;
 use App\Models\Company;
 use App\Models\User;
+use Illuminate\Validation\ValidationException;
 
 final class ManageAssignment
 {
@@ -47,8 +49,45 @@ final class ManageAssignment
     public function close(Company $company, int $id, string $endedAt): AssignmentDTO
     {
         $assignment = $this->assignments->findForCompany($company, $id) ?? abort(404);
-        $assignment->ended_at = $endedAt;
+        $role = $assignment->role;
+        $isActive = $assignment->ended_at === null;
 
-        return AssignmentDTO::fromModel($this->assignments->save($assignment));
+        if (
+            $isActive
+            && $role !== null
+            && $role->name === 'Pemilik'
+            && ! $this->assignments->hasOtherActiveWithRole($company, $assignment->id, $role->id)
+        ) {
+            throw ValidationException::withMessages([
+                'assignment' => 'Penempatan Pemilik terakhir tidak bisa ditutup.',
+            ]);
+        }
+
+        $assignment->ended_at = $endedAt;
+        $saved = $this->assignments->save($assignment);
+
+        if ($isActive && $role !== null) {
+            setPermissionsTeamId($company->id);
+
+            if (! $this->assignments->hasOtherActiveWithRole($company, $saved->id, $role->id)) {
+                $saved->user?->removeRole($role);
+            }
+        }
+
+        if ($isActive && $saved->user !== null && ! $this->assignments->hasAnyActiveForUser($saved->user)) {
+            $saved->user->tokens()->delete();
+        }
+
+        Audit::record(
+            $company,
+            $saved->branch_id,
+            'access.assignment.close',
+            'assignment',
+            $saved->id,
+            ['endedAt' => null, 'role' => $role?->name],
+            ['endedAt' => $saved->ended_at?->toDateString(), 'role' => $role?->name],
+        );
+
+        return AssignmentDTO::fromModel($saved);
     }
 }

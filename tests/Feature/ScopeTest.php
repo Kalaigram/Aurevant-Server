@@ -24,7 +24,6 @@ class ScopeTest extends TestCase
     {
         $manager = User::factory()->create();
         $company = Company::create(['name' => 'PT A', 'slug' => 'pt-a', 'status' => 'aktif']);
-        $this->owner($manager, $company);
         $a = Branch::create(['company_id' => $company->id, 'code' => 'A', 'name' => 'Cabang A']);
         $b = Branch::create(['company_id' => $company->id, 'code' => 'B', 'name' => 'Cabang B']);
         $item = Item::create([
@@ -37,6 +36,7 @@ class ScopeTest extends TestCase
             'user_id' => $manager->id, 'company_id' => $company->id,
             'branch_id' => $a->id, 'started_at' => '2026-10-01',
         ]);
+        $this->owner($manager, $company);
 
         return [$manager, $company, $a, $b, $item];
     }
@@ -106,16 +106,20 @@ class ScopeTest extends TestCase
         ])->assertForbidden()->assertJsonPath('status', 'error');
     }
 
-    public function test_tanpa_penempatan_akses_penuh(): void
+    public function test_tanpa_penempatan_ditolak(): void
     {
         [$manager, $company, $a, $b] = $this->setupWorld();
         $api = fn () => $this->actingAs($manager, 'sanctum');
 
         EmployeeAssignment::where('user_id', $manager->id)->delete();
 
+        $api()->getJson("/api/v1/companies/{$company->id}/branches/{$b->id}")
+            ->assertForbidden()
+            ->assertJsonPath('message', 'Akses ditolak.');
+
         $api()->putJson("/api/v1/companies/{$company->id}/branches/{$b->id}", [
             'code' => 'B', 'name' => 'Bebas',
-        ])->assertOk();
+        ])->assertForbidden();
     }
 
     public function test_po_terikat_cabang(): void

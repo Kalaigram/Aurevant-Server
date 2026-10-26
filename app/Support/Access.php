@@ -22,7 +22,7 @@ final class Access
 
     /**
      * Daftar id cabang yang boleh diakses, atau null bila seluruh perusahaan.
-     * Tanpa baris penempatan = akses penuh (kompatibel ke belakang).
+     * Tanpa penempatan aktif = daftar kosong (fail-closed).
      *
      * @return list<int>|null
      */
@@ -35,7 +35,7 @@ final class Access
             ->all();
 
         if ($assignments === []) {
-            return null;
+            return [];
         }
 
         if (in_array(null, $assignments, true)) {
@@ -43,6 +43,14 @@ final class Access
         }
 
         return array_values(array_unique(array_map('intval', $assignments)));
+    }
+
+    public static function hasActiveAssignment(User $user, Company $company): bool
+    {
+        return $user->assignments()
+            ->where('company_id', $company->id)
+            ->whereNull('ended_at')
+            ->exists();
     }
 
     /** @param list<int> $branchIds */

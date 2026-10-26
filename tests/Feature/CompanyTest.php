@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\Company;
+use App\Models\EmployeeAssignment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -12,6 +13,15 @@ use Tests\TestCase;
 class CompanyTest extends TestCase
 {
     use RefreshDatabase;
+
+    private function assign(User $user, Company $company): void
+    {
+        EmployeeAssignment::create([
+            'user_id' => $user->id,
+            'company_id' => $company->id,
+            'started_at' => now()->toDateString(),
+        ]);
+    }
 
     public function test_guest_ditolak_dengan_401(): void
     {
@@ -37,11 +47,12 @@ class CompanyTest extends TestCase
             ]);
     }
 
-    public function test_daftar_company_mengikuti_kontrak_respons(): void
+    public function test_daftar_company_hanya_yang_punya_penempatan_aktif(): void
     {
         $user = User::factory()->create();
-        Company::create(['name' => 'Bengkel Maju', 'slug' => 'bengkel-maju', 'status' => 'aktif']);
+        $bengkel = Company::create(['name' => 'Bengkel Maju', 'slug' => 'bengkel-maju', 'status' => 'aktif']);
         Company::create(['name' => 'Salon Ayu', 'slug' => 'salon-ayu', 'status' => 'trial']);
+        $this->assign($user, $bengkel);
 
         $response = $this->actingAs($user, 'sanctum')->getJson('/api/v1/companies');
 
@@ -51,18 +62,59 @@ class CompanyTest extends TestCase
             'errors' => null,
         ]);
 
-        $this->assertEquals(
-            ['Bengkel Maju', 'Salon Ayu'],
-            $response->json('data.*.name')
-        );
+        $this->assertSame(['Bengkel Maju'], $response->json('data.*.name'));
+    }
+
+    public function test_daftar_company_kosong_tanpa_penempatan(): void
+    {
+        $user = User::factory()->create();
+        Company::create(['name' => 'Bengkel Maju', 'slug' => 'bengkel-maju', 'status' => 'aktif']);
+
+        $this->actingAs($user, 'sanctum')->getJson('/api/v1/companies?per_page=5')
+            ->assertOk()
+            ->assertJsonPath('meta.total', 0)
+            ->assertJsonCount(0, 'data');
+    }
+
+    public function test_profil_company_menolak_tanpa_penempatan_aktif(): void
+    {
+        $user = User::factory()->create();
+        $company = Company::create(['name' => 'Bengkel Maju', 'slug' => 'bengkel-maju', 'status' => 'aktif']);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson("/api/v1/companies/{$company->id}/profile")
+            ->assertForbidden()
+            ->assertJson([
+                'status' => 'error',
+                'message' => 'Akses ditolak.',
+                'data' => null,
+            ]);
+    }
+
+    public function test_daftar_company_menolak_penempatan_yang_sudah_berakhir(): void
+    {
+        $user = User::factory()->create();
+        $company = Company::create(['name' => 'Bengkel Maju', 'slug' => 'bengkel-maju', 'status' => 'aktif']);
+        EmployeeAssignment::create([
+            'user_id' => $user->id,
+            'company_id' => $company->id,
+            'started_at' => now()->subMonth()->toDateString(),
+            'ended_at' => now()->subDay()->toDateString(),
+        ]);
+
+        $this->actingAs($user, 'sanctum')->getJson('/api/v1/companies')
+            ->assertOk()
+            ->assertJsonPath('meta.total', 0);
     }
 
     public function test_paginasi_dibatasi_dan_ada_meta(): void
     {
         $user = User::factory()->create();
-        Company::create(['name' => 'A', 'slug' => 'a', 'status' => 'trial']);
-        Company::create(['name' => 'B', 'slug' => 'b', 'status' => 'trial']);
-        Company::create(['name' => 'C', 'slug' => 'c', 'status' => 'trial']);
+
+        foreach (['A', 'B', 'C'] as $name) {
+            $company = Company::create(['name' => $name, 'slug' => strtolower($name), 'status' => 'trial']);
+            $this->assign($user, $company);
+        }
 
         $response = $this->actingAs($user, 'sanctum')->getJson('/api/v1/companies?per_page=2');
 

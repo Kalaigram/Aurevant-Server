@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Models\Branch;
 use App\Models\Company;
+use App\Models\EmployeeAssignment;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -46,6 +47,12 @@ class AccessTest extends TestCase
         $mine = $this->actingAs($owner, 'sanctum')->getJson("{$base}/my-permissions")->assertOk()->json('data');
         $this->assertContains('transaksi.void', $mine['permissions']);
         $this->assertContains('jasa.proses', $mine['permissions']);
+
+        EmployeeAssignment::create([
+            'user_id' => $staff->id,
+            'company_id' => $company->id,
+            'started_at' => now()->toDateString(),
+        ]);
 
         $staffMine = $this->actingAs($staff, 'sanctum')->getJson("{$base}/my-permissions")->assertOk()->json('data');
         $this->assertSame([], $staffMine['permissions']);
@@ -107,6 +114,11 @@ class AccessTest extends TestCase
         $this->assertFalse($staff->hasPermissionTo('transaksi.buat'));
 
         // role perusahaan lain tak terlihat
+        EmployeeAssignment::create([
+            'user_id' => $owner->id,
+            'company_id' => $other->id,
+            'started_at' => now()->toDateString(),
+        ]);
         $api()->getJson("/api/v1/companies/{$other->id}/access/roles")
             ->assertOk()->assertJsonPath('meta.total', 0);
     }
@@ -134,20 +146,89 @@ class AccessTest extends TestCase
             'started_at' => '2026-10-01',
         ])->assertNotFound();
 
-        $api()->getJson("{$base}/assignments?active=1")->assertOk()->assertJsonPath('meta.total', 1);
-        $api()->getJson("{$base}/assignments?active=1&q=".urlencode($staff->name))->assertOk()
+        $api()->getJson("{$base}/assignments?active=1&user_id={$staff->id}")
+            ->assertOk()->assertJsonPath('meta.total', 1);
+        $api()->getJson("{$base}/assignments?active=1&user_id={$staff->id}&q=".urlencode($staff->name))
+            ->assertOk()
             ->assertJsonPath('meta.total', 1)
             ->assertJsonPath('data.0.userName', $staff->name)
             ->assertJsonPath('data.0.userEmail', $staff->email)
             ->assertJsonPath('data.0.branchCode', 'TKO')
             ->assertJsonPath('data.0.branchName', 'Toko');
-        $api()->getJson("{$base}/assignments?active=1&branch_id={$branch->id}&role_id={$roleId}")
+        $api()->getJson("{$base}/assignments?active=1&user_id={$staff->id}&branch_id={$branch->id}&role_id={$roleId}")
             ->assertOk()->assertJsonPath('meta.total', 1);
-        $api()->getJson("{$base}/assignments?active=1&q=tidak-ada")->assertOk()->assertJsonPath('meta.total', 0);
+        $api()->getJson("{$base}/assignments?active=1&user_id={$staff->id}&q=tidak-ada")
+            ->assertOk()->assertJsonPath('meta.total', 0);
         $api()->postJson("{$base}/assignments/{$tugasId}/close", ['ended_at' => '2026-10-31'])
             ->assertOk()->assertJsonPath('data.endedAt', '2026-10-31');
-        $api()->getJson("{$base}/assignments?active=1")->assertOk()->assertJsonPath('meta.total', 0);
+        $api()->getJson("{$base}/assignments?active=1&user_id={$staff->id}")
+            ->assertOk()->assertJsonPath('meta.total', 0);
         // riwayat tetap ada
-        $api()->getJson("{$base}/assignments")->assertOk()->assertJsonPath('meta.total', 1);
+        $api()->getJson("{$base}/assignments?user_id={$staff->id}")
+            ->assertOk()->assertJsonPath('meta.total', 1);
+    }
+
+    public function test_baca_role_dan_penempatan_hanya_untuk_pengelola(): void
+    {
+        [$owner, $staff, $company] = $this->setupWorld();
+        $this->member($staff, $company);
+        $base = "/api/v1/companies/{$company->id}/access";
+
+        $this->actingAs($staff, 'sanctum')->getJson("{$base}/roles")->assertForbidden();
+        $this->actingAs($staff, 'sanctum')->getJson("{$base}/assignments")->assertForbidden();
+
+        $this->actingAs($owner, 'sanctum')->getJson("{$base}/roles")->assertOk();
+        $this->actingAs($owner, 'sanctum')->getJson("{$base}/assignments")->assertOk();
+    }
+
+    public function test_menutup_penempatan_mencabut_role_dan_token(): void
+    {
+        [$owner, $staff, $company, $other, $branch] = $this->setupWorld();
+        $api = fn () => $this->actingAs($owner, 'sanctum');
+        $base = "/api/v1/companies/{$company->id}/access";
+
+        $roleId = $api()->postJson("{$base}/roles", [
+            'name' => 'Kasir', 'permissions' => ['transaksi.buat'],
+        ])->assertCreated()->json('data.id');
+
+        $api()->postJson("{$base}/users/{$staff->id}/roles", ['role' => 'Kasir'])
+            ->assertOk();
+
+        $assignmentId = $api()->postJson("{$base}/users/{$staff->id}/assignments", [
+            'branch_id' => $branch->id,
+            'role_id' => $roleId,
+            'started_at' => '2026-10-01',
+        ])->assertCreated()->json('data.id');
+
+        $staff->createToken('android');
+        $this->assertDatabaseCount('personal_access_tokens', 1);
+
+        $api()->postJson("{$base}/assignments/{$assignmentId}/close", ['ended_at' => '2026-10-31'])
+            ->assertOk()->assertJsonPath('data.endedAt', '2026-10-31');
+
+        $this->assertDatabaseMissing('model_has_roles', [
+            'role_id' => $roleId,
+            'model_id' => $staff->id,
+        ]);
+        $this->assertSame(0, $staff->tokens()->count());
+    }
+
+    public function test_pemilik_terakhir_tidak_bisa_ditutup(): void
+    {
+        [$owner, $staff, $company] = $this->setupWorld();
+        $api = fn () => $this->actingAs($owner, 'sanctum');
+        $base = "/api/v1/companies/{$company->id}/access";
+
+        $assignment = EmployeeAssignment::query()
+            ->where('user_id', $owner->id)
+            ->where('company_id', $company->id)
+            ->whereNull('ended_at')
+            ->firstOrFail();
+
+        $api()->postJson("{$base}/assignments/{$assignment->id}/close", ['ended_at' => '2026-10-31'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('assignment');
+
+        $this->assertNull($assignment->fresh()->ended_at);
     }
 }

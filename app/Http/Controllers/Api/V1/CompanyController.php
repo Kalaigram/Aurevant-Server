@@ -26,7 +26,7 @@ class CompanyController extends Controller
         ]);
 
         return ApiResponse::paginated(
-            $useCase->paginated((int) ($validated['per_page'] ?? 15)),
+            $useCase->paginated($request->user(), (int) ($validated['per_page'] ?? 15)),
             'Daftar perusahaan'
         );
     }

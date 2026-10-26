@@ -31,6 +31,7 @@ class DashboardTest extends TestCase
 
         // user tanpa izin: hanya info dasar
         $plain = User::factory()->create();
+        $this->member($plain, $company, $branch->id);
         $minimal = $this->actingAs($plain, 'sanctum')->getJson("{$base}/dashboard")->assertOk()->json('data');
         $this->assertArrayHasKey('company', $minimal);
         $this->assertArrayHasKey('subscription', $minimal);

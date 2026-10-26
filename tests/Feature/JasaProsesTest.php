@@ -23,7 +23,7 @@ class JasaProsesTest extends TestCase
     use RefreshDatabase;
     use WithPermissions;
 
-    private function userWithTemplate(Company $company, string $template): User
+    private function userWithTemplate(Company $company, string $template, int $branchId): User
     {
         setPermissionsTeamId($company->id);
         foreach (PermissionCatalog::all() as $name) {
@@ -33,6 +33,7 @@ class JasaProsesTest extends TestCase
         $role->syncPermissions(RoleTemplates::permissionsFor($template, PermissionCatalog::all()));
         $user = User::factory()->create();
         $user->assignRole($role);
+        $this->member($user, $company, $branchId);
 
         return $user->fresh();
     }
@@ -50,8 +51,8 @@ class JasaProsesTest extends TestCase
         ]);
         ItemPrice::create(['item_id' => $servis->id, 'branch_id' => $branch->id, 'price' => 100000]);
 
-        $pelaksana = $this->userWithTemplate($company, 'Pelaksana Jasa');
-        $kasir = $this->userWithTemplate($company, 'Kasir');
+        $pelaksana = $this->userWithTemplate($company, 'Pelaksana Jasa', $branch->id);
+        $kasir = $this->userWithTemplate($company, 'Kasir', $branch->id);
 
         $boss = fn () => $this->actingAs($owner, 'sanctum');
         $tek = fn () => $this->actingAs($pelaksana, 'sanctum');

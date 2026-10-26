@@ -20,6 +20,8 @@ class AssignmentController extends Controller
 {
     public function index(Request $request, Company $company, ListAssignments $useCase): JsonResponse
     {
+        $this->guardAccessRead($request);
+
         $validated = $request->validate([
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'user_id' => ['sometimes', 'integer'],
@@ -64,8 +66,10 @@ class AssignmentController extends Controller
         );
     }
 
-    public function show(Company $company, int $assignment, AssignmentRepositoryInterface $assignments): JsonResponse
+    public function show(Request $request, Company $company, int $assignment, AssignmentRepositoryInterface $assignments): JsonResponse
     {
+        $this->guardAccessRead($request);
+
         return ApiResponse::success(
             AssignmentDTO::fromModel($this->scoped($company, $assignment, $assignments)),
             'Detail penempatan.'
@@ -82,6 +86,15 @@ class AssignmentController extends Controller
             $useCase->close($company, $assignment, $validated['ended_at']),
             'Penempatan ditutup.'
         );
+    }
+
+    private function guardAccessRead(Request $request): void
+    {
+        $actor = $request->user();
+
+        if (! $actor->is_super_admin && ! $actor->can('karyawan.kelola') && ! $actor->can('pengaturan.kelola')) {
+            abort(403, 'Akses ditolak.');
+        }
     }
 
     private function scoped(Company $company, int $id, AssignmentRepositoryInterface $assignments): EmployeeAssignment

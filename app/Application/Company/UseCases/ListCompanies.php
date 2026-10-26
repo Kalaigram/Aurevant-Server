@@ -6,6 +6,7 @@ namespace App\Application\Company\UseCases;
 
 use App\Application\Company\DTOs\CompanyDTO;
 use App\Domain\Company\Repositories\CompanyRepositoryInterface;
+use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 final class ListCompanies
@@ -14,18 +15,10 @@ final class ListCompanies
         private CompanyRepositoryInterface $companies,
     ) {}
 
-    /** @return list<CompanyDTO> */
-    public function __invoke(): array
-    {
-        return $this->companies->all()
-            ->map(fn ($company) => CompanyDTO::fromModel($company))
-            ->all();
-    }
-
     /** @return LengthAwarePaginator<int, CompanyDTO> */
-    public function paginated(int $perPage): LengthAwarePaginator
+    public function paginated(User $user, int $perPage): LengthAwarePaginator
     {
-        return $this->companies->paginate($perPage)
+        return $this->companies->paginateForUser($user, $perPage)
             ->through(fn ($company) => CompanyDTO::fromModel($company));
     }
 }

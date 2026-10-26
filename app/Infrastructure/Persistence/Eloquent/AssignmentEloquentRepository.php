@@ -7,6 +7,7 @@ namespace App\Infrastructure\Persistence\Eloquent;
 use App\Domain\Access\Repositories\AssignmentRepositoryInterface;
 use App\Models\Company;
 use App\Models\EmployeeAssignment;
+use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 final class AssignmentEloquentRepository implements AssignmentRepositoryInterface
@@ -61,5 +62,23 @@ final class AssignmentEloquentRepository implements AssignmentRepositoryInterfac
         $assignment->save();
 
         return $assignment->refresh()->load(['user', 'branch', 'role']);
+    }
+
+    public function hasOtherActiveWithRole(Company $company, int $assignmentId, int $roleId): bool
+    {
+        return EmployeeAssignment::query()
+            ->where('company_id', $company->id)
+            ->whereKeyNot($assignmentId)
+            ->where('role_id', $roleId)
+            ->whereNull('ended_at')
+            ->exists();
+    }
+
+    public function hasAnyActiveForUser(User $user): bool
+    {
+        return EmployeeAssignment::query()
+            ->where('user_id', $user->id)
+            ->whereNull('ended_at')
+            ->exists();
     }
 }
