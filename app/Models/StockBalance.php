@@ -18,6 +18,7 @@ class StockBalance extends Model
         'item_id',
         'qty',
         'avg_cost',
+        'min_stock',
     ];
 
     protected function casts(): array
@@ -25,6 +26,7 @@ class StockBalance extends Model
         return [
             'qty' => 'decimal:3',
             'avg_cost' => 'decimal:2',
+            'min_stock' => 'decimal:3',
         ];
     }
 

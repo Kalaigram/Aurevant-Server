@@ -15,6 +15,7 @@ use App\Models\DailyBranchSummary;
 use App\Models\EmployeeAssignment;
 use App\Models\LeaveRequest;
 use App\Models\PayrollPeriod;
+use App\Models\StockBalance;
 use App\Models\StockOpname;
 use App\Models\StockTransfer;
 use App\Models\User;
@@ -53,7 +54,7 @@ final class CompanyDashboard
         }
 
         if ($user->hasPermissionTo('stok.transfer') || $user->hasPermissionTo('stok.opname')) {
-            $data['operasional'] = $this->operations($company, $user);
+            $data['operasional'] = $this->operations($company, $user, $branches);
         }
 
         if ($user->hasPermissionTo('jadwal.lihat')) {
@@ -132,7 +133,7 @@ final class CompanyDashboard
     }
 
     /** @return array<string, mixed> */
-    private function operations(Company $company, User $user): array
+    private function operations(Company $company, User $user, ?array $branches): array
     {
         $data = [];
 
@@ -148,6 +149,30 @@ final class CompanyDashboard
                 ->where('company_id', $company->id)
                 ->where('status', 'diajukan')
                 ->count();
+
+            $lowStock = StockBalance::query()
+                ->where('company_id', $company->id)
+                ->when($branches !== null, fn ($query) => $query->whereIn('branch_id', $branches))
+                ->whereNotNull('min_stock')
+                ->whereColumn('qty', '<=', 'min_stock');
+
+            $data['stok_menipis'] = (clone $lowStock)->count();
+            $data['stok_menipis_items'] = $lowStock
+                ->with(['item', 'branch'])
+                ->orderByRaw('qty - min_stock')
+                ->limit(5)
+                ->get()
+                ->map(fn (StockBalance $balance) => [
+                    'item_id' => $balance->item_id,
+                    'item_code' => $balance->item?->code,
+                    'item_name' => $balance->item?->name,
+                    'unit' => $balance->item?->unit,
+                    'branch_id' => $balance->branch_id,
+                    'branch_name' => $balance->branch?->name,
+                    'qty' => (string) $balance->qty,
+                    'min_stock' => (string) $balance->min_stock,
+                ])
+                ->all();
         }
 
         return $data;

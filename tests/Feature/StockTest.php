@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Models\AppNotification;
 use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Item;
@@ -129,5 +130,88 @@ class StockTest extends TestCase
             "/api/v1/companies/{$company->id}/branches/{$branch->id}/stock/movements?q=Rusak"
         )->assertOk()->assertJsonPath('meta.total', 1)
             ->assertJsonPath('data.0.note', 'Rusak');
+    }
+
+    public function test_stok_minimum_filter_dan_alert(): void
+    {
+        [$user, $company, $branch, $item] = $this->setupWorld();
+        $api = fn () => $this->actingAs($user, 'sanctum');
+        $base = "/api/v1/companies/{$company->id}/branches/{$branch->id}";
+        $minimumUrl = "{$base}/stock/{$item->id}/minimum";
+
+        $api()->postJson("{$base}/stock/movements", [
+            'item_id' => $item->id, 'type' => 'pembelian', 'qty' => 100, 'unit_cost' => 50000,
+        ])->assertCreated();
+
+        // staf tanpa stok.opname tidak boleh mengubah batas minimum
+        $staff = User::factory()->create();
+        $this->member($staff, $company, $branch->id);
+        $this->actingAs($staff, 'sanctum')
+            ->putJson($minimumUrl, ['min_stock' => 10])
+            ->assertForbidden();
+
+        // nilai negatif ditolak
+        $api()->putJson($minimumUrl, ['min_stock' => -1])
+            ->assertUnprocessable()->assertJsonValidationErrors('min_stock');
+
+        $api()->putJson($minimumUrl, ['min_stock' => 110])
+            ->assertOk()
+            ->assertJsonPath('data.minStock', '110.000')
+            ->assertJsonPath('data.lowStock', true);
+
+        // batas minimum belum memicu notifikasi
+        $this->assertSame(0, AppNotification::query()->where('type', 'stok.menipis')->count());
+
+        $api()->getJson("{$base}/stock?low_stock=1")
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.itemCode', 'OLI-01');
+
+        $dashboard = $api()->getJson("/api/v1/companies/{$company->id}/dashboard")
+            ->assertOk()
+            ->json('data.operasional');
+        $this->assertSame(1, $dashboard['stok_menipis']);
+        $this->assertSame('OLI-01', $dashboard['stok_menipis_items'][0]['item_code']);
+        $this->assertSame('Pusat', $dashboard['stok_menipis_items'][0]['branch_name']);
+
+        // naikkan stok di atas minimum, lalu turunkan hingga melewati batas
+        $api()->putJson($minimumUrl, ['min_stock' => 90])
+            ->assertOk()->assertJsonPath('data.lowStock', false);
+        $this->assertSame(0, AppNotification::query()->where('type', 'stok.menipis')->count());
+
+        $api()->postJson("{$base}/stock/movements", [
+            'item_id' => $item->id, 'type' => 'penjualan', 'qty' => 20,
+        ])->assertCreated();
+
+        $this->assertSame(1, AppNotification::query()->where('type', 'stok.menipis')->count());
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $user->id,
+            'type' => 'stok.menipis',
+            'title' => 'Stok menipis: Oli',
+            'link' => '/stock',
+        ]);
+
+        // masih di bawah minimum: tidak mengirim peringatan berulang
+        $api()->postJson("{$base}/stock/movements", [
+            'item_id' => $item->id, 'type' => 'penjualan', 'qty' => 5,
+        ])->assertCreated();
+        $this->assertSame(1, AppNotification::query()->where('type', 'stok.menipis')->count());
+
+        // kosongkan batas minimum
+        $api()->putJson($minimumUrl, ['min_stock' => null])
+            ->assertOk()
+            ->assertJsonPath('data.minStock', null)
+            ->assertJsonPath('data.lowStock', false);
+        $api()->getJson("{$base}/stock?low_stock=1")
+            ->assertOk()->assertJsonPath('meta.total', 0);
+
+        // item perusahaan lain tidak dapat diatur
+        $other = Company::create(['name' => 'PT B', 'slug' => 'pt-b', 'status' => 'aktif']);
+        $otherItem = Item::create([
+            'company_id' => $other->id, 'code' => 'GULA-01', 'name' => 'Gula',
+            'type' => 'barang', 'unit' => 'kg',
+        ]);
+        $api()->putJson("{$base}/stock/{$otherItem->id}/minimum", ['min_stock' => 5])
+            ->assertNotFound();
     }
 }

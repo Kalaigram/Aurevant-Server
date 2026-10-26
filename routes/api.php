@@ -78,6 +78,7 @@ Route::middleware(['throttle:api'])->prefix('v1')->group(function (): void {
         Route::get('/companies/{company}/branches/{branch}/stock', [StockController::class, 'index']);
         Route::get('/companies/{company}/branches/{branch}/stock/movements', [StockController::class, 'movements']);
         Route::post('/companies/{company}/branches/{branch}/stock/movements', [StockController::class, 'store'])->middleware('permission:stok.opname');
+        Route::put('/companies/{company}/branches/{branch}/stock/{item}/minimum', [StockController::class, 'setMinimum'])->middleware('permission:stok.opname');
         Route::get('/companies/{company}/stock-transfers', [StockTransferController::class, 'index']);
         Route::post('/companies/{company}/stock-transfers', [StockTransferController::class, 'store'])->middleware('permission:stok.transfer');
         Route::get('/companies/{company}/stock-transfers/{transfer}', [StockTransferController::class, 'show']);

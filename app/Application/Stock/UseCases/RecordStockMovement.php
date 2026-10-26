@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Stock\UseCases;
 
 use App\Application\Stock\DTOs\StockMovementDTO;
+use App\Application\Stock\LowStockAlert;
 use App\Domain\Catalog\Repositories\ItemRepositoryInterface;
 use App\Domain\Stock\Repositories\StockBalanceRepositoryInterface;
 use App\Domain\Stock\Repositories\StockMovementRepositoryInterface;
@@ -20,6 +21,7 @@ final class RecordStockMovement
         private StockBalanceRepositoryInterface $balances,
         private StockMovementRepositoryInterface $movements,
         private StockLedger $ledger,
+        private LowStockAlert $lowStock,
     ) {}
 
     public function __invoke(
@@ -35,6 +37,7 @@ final class RecordStockMovement
 
         return DB::transaction(function () use ($company, $branch, $item, $type, $qty, $unitCost, $note) {
             $balance = $this->balances->findLocked($branch->id, $item->id);
+            $previousQty = (float) ($balance?->qty ?? 0);
 
             $result = $this->ledger->apply(
                 (float) ($balance?->qty ?? 0),
@@ -56,7 +59,9 @@ final class RecordStockMovement
 
             $balance->qty = $result->newBalance;
             $balance->avg_cost = $result->newAvgCost;
-            $this->balances->save($balance);
+            $balance = $this->balances->save($balance);
+
+            $this->lowStock->check($company, $branch, $balance, $previousQty);
 
             $movement = $this->movements->record([
                 'company_id' => $company->id,

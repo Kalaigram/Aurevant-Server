@@ -15,6 +15,8 @@ final readonly class StockBalanceDTO
         public ?string $unit,
         public string $qty,
         public string $avgCost,
+        public ?string $minStock,
+        public bool $lowStock,
     ) {}
 
     public static function fromModel(StockBalance $balance): self
@@ -26,6 +28,8 @@ final readonly class StockBalanceDTO
             unit: $balance->item->unit,
             qty: (string) $balance->qty,
             avgCost: (string) $balance->avg_cost,
+            minStock: $balance->min_stock === null ? null : (string) $balance->min_stock,
+            lowStock: $balance->min_stock !== null && (float) $balance->qty <= (float) $balance->min_stock,
         );
     }
 }

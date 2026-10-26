@@ -8,6 +8,7 @@ use App\Application\Audit\Audit;
 use App\Application\Stock\UseCases\ListStockBalances;
 use App\Application\Stock\UseCases\ListStockMovements;
 use App\Application\Stock\UseCases\RecordStockMovement;
+use App\Application\Stock\UseCases\SetStockMinimum;
 use App\Domain\Branch\Repositories\BranchRepositoryInterface;
 use App\Domain\Catalog\Repositories\ItemRepositoryInterface;
 use App\Http\Controllers\Controller;
@@ -25,6 +26,7 @@ class StockController extends Controller
         $validated = $request->validate([
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'q' => ['sometimes', 'string', 'max:100'],
+            'low_stock' => ['sometimes', 'boolean'],
         ]);
 
         return ApiResponse::paginated(
@@ -32,6 +34,7 @@ class StockController extends Controller
                 $this->scopedBranch($company, $branch, $branches),
                 (int) ($validated['per_page'] ?? 15),
                 $validated['q'] ?? null,
+                (bool) ($validated['low_stock'] ?? false),
             ),
             'Saldo stok.'
         );
@@ -87,6 +90,29 @@ class StockController extends Controller
             $dto,
             'Mutasi stok dicatat.',
             201
+        );
+    }
+
+    public function setMinimum(
+        Request $request,
+        Company $company,
+        int $branch,
+        int $item,
+        BranchRepositoryInterface $branches,
+        SetStockMinimum $useCase,
+    ): JsonResponse {
+        $validated = $request->validate([
+            'min_stock' => ['present', 'nullable', 'numeric', 'min:0'],
+        ]);
+
+        return ApiResponse::success(
+            $useCase(
+                $company,
+                $this->scopedBranch($company, $branch, $branches),
+                $item,
+                $validated['min_stock'] === null ? null : (float) $validated['min_stock'],
+            ),
+            'Stok minimum disimpan.'
         );
     }
 

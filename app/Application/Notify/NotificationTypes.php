@@ -20,6 +20,7 @@ final class NotificationTypes
             'sale.void',
             'sale.retur',
             'opname.disetujui',
+            'stok.menipis',
             'shift.selisih',
             'langganan.jatuh_tempo',
         ];

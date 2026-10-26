@@ -107,7 +107,8 @@ class NotificationTest extends TestCase
         $api()->getJson('/api/v1/notification-preferences')
             ->assertOk()
             ->assertJsonPath('data.0.type', 'transfer.diajukan')
-            ->assertJsonPath('data.0.enabled', true);
+            ->assertJsonPath('data.0.enabled', true)
+            ->assertJsonFragment(['type' => 'stok.menipis', 'enabled' => true]);
 
         $api()->putJson('/api/v1/notification-preferences', [
             'type' => 'sale.void', 'enabled' => false,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Models\AppNotification;
 use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Item;
@@ -132,6 +133,38 @@ class TransferTest extends TestCase
         // batalkan dari diajukan/disetujui? batal hanya draft/diajukan → 422, lalu alur batal yg benar
         $api()->postJson("{$base}/{$id}/cancel")
             ->assertUnprocessable()->assertJsonPath('status', 'error');
+    }
+
+    public function test_kirim_transfer_memicu_alert_stok_menipis(): void
+    {
+        [$user, $company, $gudang, $toko, $item] = $this->setupWorld();
+        $this->stockIn($user, $company, $gudang, $item);
+        $api = fn () => $this->actingAs($user, 'sanctum');
+        $base = "/api/v1/companies/{$company->id}/stock-transfers";
+
+        $api()->putJson(
+            "/api/v1/companies/{$company->id}/branches/{$gudang->id}/stock/{$item->id}/minimum",
+            ['min_stock' => 70]
+        )->assertOk();
+
+        $id = $api()->postJson($base, [
+            'from_branch_id' => $gudang->id,
+            'to_branch_id' => $toko->id,
+            'items' => [['item_id' => $item->id, 'qty' => 40]],
+        ])->assertCreated()->json('data.id');
+
+        $api()->postJson("{$base}/{$id}/submit")->assertOk();
+        $api()->postJson("{$base}/{$id}/approve")->assertOk();
+        $this->assertSame(0, AppNotification::query()->where('type', 'stok.menipis')->count());
+
+        $api()->postJson("{$base}/{$id}/ship")->assertOk();
+
+        $this->assertSame(1, AppNotification::query()->where('type', 'stok.menipis')->count());
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $user->id,
+            'type' => 'stok.menipis',
+            'title' => 'Stok menipis: Oli',
+        ]);
     }
 
     public function test_validasi_cabang_dan_guest(): void

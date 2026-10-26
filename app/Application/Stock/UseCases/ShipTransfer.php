@@ -7,6 +7,7 @@ namespace App\Application\Stock\UseCases;
 use App\Application\Audit\Audit;
 use App\Application\Notify\Notifier;
 use App\Application\Stock\DTOs\StockTransferDTO;
+use App\Application\Stock\LowStockAlert;
 use App\Domain\Stock\Repositories\StockBalanceRepositoryInterface;
 use App\Domain\Stock\Repositories\StockMovementRepositoryInterface;
 use App\Domain\Stock\Repositories\StockTransferRepositoryInterface;
@@ -22,6 +23,7 @@ final class ShipTransfer
         private StockBalanceRepositoryInterface $balances,
         private StockMovementRepositoryInterface $movements,
         private StockLedger $ledger,
+        private LowStockAlert $lowStock,
     ) {}
 
     public function __invoke(StockTransfer $transfer): StockTransferDTO
@@ -35,6 +37,7 @@ final class ShipTransfer
         return DB::transaction(function () use ($transfer) {
             foreach ($transfer->items as $line) {
                 $balance = $this->balances->findLocked($transfer->from_branch_id, $line->item_id);
+                $previousQty = (float) ($balance?->qty ?? 0);
                 $result = $this->ledger->apply(
                     (float) ($balance?->qty ?? 0),
                     (float) ($balance?->avg_cost ?? 0),
@@ -54,7 +57,9 @@ final class ShipTransfer
 
                 $balance->qty = $result->newBalance;
                 $balance->avg_cost = $result->newAvgCost;
-                $this->balances->save($balance);
+                $balance = $this->balances->save($balance);
+
+                $this->lowStock->check($transfer->company, $transfer->fromBranch, $balance, $previousQty);
 
                 $this->movements->record([
                     'company_id' => $transfer->company_id,
