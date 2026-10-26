@@ -219,6 +219,7 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::get('/companies/{company}/holidays', [ScheduleController::class, 'holidays']);
         Route::post('/companies/{company}/holidays', [ScheduleController::class, 'storeHoliday'])->middleware('permission:pengaturan.kelola');
         Route::delete('/companies/{company}/holidays/{holiday}', [ScheduleController::class, 'destroyHoliday'])->middleware('permission:pengaturan.kelola');
+        Route::get('/holidays', [ScheduleController::class, 'nationalHolidays'])->middleware('super.admin');
         Route::post('/holidays', [ScheduleController::class, 'storeNationalHoliday'])->middleware('super.admin');
         Route::delete('/holidays/{holiday}', [ScheduleController::class, 'destroyNationalHoliday'])->middleware('super.admin');
         Route::get('/admin/companies', [TenantController::class, 'index'])->middleware('super.admin');

@@ -171,6 +171,20 @@ class ScheduleController extends Controller
         return ApiResponse::success(null, 'Libur dihapus.');
     }
 
+    public function nationalHolidays(Request $request, ManageHolidays $useCase): JsonResponse
+    {
+        $validated = $request->validate([
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        return ApiResponse::paginated(
+            $useCase->list(null, (int) ($validated['per_page'] ?? 100))->through(
+                fn ($holiday) => HolidayDTO::fromModel($holiday)
+            ),
+            'Daftar libur nasional.'
+        );
+    }
+
     public function storeNationalHoliday(Request $request, ManageHolidays $useCase): JsonResponse
     {
         $validated = $request->validate([

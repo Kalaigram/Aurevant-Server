@@ -94,6 +94,12 @@ class ScheduleTest extends TestCase
             'date' => '2026-12-25', 'name' => 'Natal',
         ])->assertCreated();
 
+        // daftar libur nasional hanya untuk super admin
+        $this->actingAs($owner, 'sanctum')->getJson('/api/v1/holidays')->assertForbidden();
+        $this->actingAs($admin, 'sanctum')->getJson('/api/v1/holidays')
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'Natal');
+
         // libur nasional berlaku untuk jadwal company
         $api = fn () => $this->actingAs($owner, 'sanctum');
         $jadwal = $api()->getJson(
