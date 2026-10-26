@@ -8,8 +8,10 @@ use App\Application\Catalog\DTOs\ItemDTO;
 use App\Application\Catalog\DTOs\ItemPriceDTO;
 use App\Application\Catalog\UseCases\CreateItem;
 use App\Application\Catalog\UseCases\DeleteItem;
+use App\Application\Catalog\UseCases\DeleteItemImage;
 use App\Application\Catalog\UseCases\ListItems;
 use App\Application\Catalog\UseCases\SetItemPrice;
+use App\Application\Catalog\UseCases\StoreItemImage;
 use App\Application\Catalog\UseCases\UpdateItem;
 use App\Domain\Branch\Repositories\BranchRepositoryInterface;
 use App\Domain\Catalog\Repositories\CategoryRepositoryInterface;
@@ -87,6 +89,26 @@ class ItemController extends Controller
         return ApiResponse::success(null, 'Item dihapus.');
     }
 
+    public function uploadImage(Request $request, Company $company, int $item, ItemRepositoryInterface $items, StoreItemImage $useCase): JsonResponse
+    {
+        $validated = $request->validate([
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ]);
+
+        return ApiResponse::success(
+            $useCase($this->scoped($company, $item, $items), $validated['image']),
+            'Gambar item diperbarui.'
+        );
+    }
+
+    public function deleteImage(Company $company, int $item, ItemRepositoryInterface $items, DeleteItemImage $useCase): JsonResponse
+    {
+        return ApiResponse::success(
+            $useCase($this->scoped($company, $item, $items)),
+            'Gambar item dihapus.'
+        );
+    }
+
     public function price(Company $company, int $item, int $branch, ItemRepositoryInterface $items, BranchRepositoryInterface $branches, ItemPriceRepositoryInterface $prices): JsonResponse
     {
         $scopedItem = $this->scoped($company, $item, $items);
@@ -143,6 +165,13 @@ class ItemController extends Controller
 
         if (array_key_exists('category_id', $validated) && $validated['category_id'] !== null) {
             $categories->findForCompany($company, (int) $validated['category_id']) ?? abort(404);
+        }
+
+        if (
+            (array_key_exists('commission_type', $validated) && $validated['commission_type'] === null)
+            || (array_key_exists('commission_value', $validated) && $validated['commission_value'] === null)
+        ) {
+            $validated['commission_value'] = 0;
         }
 
         return $validated;

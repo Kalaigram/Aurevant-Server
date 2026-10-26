@@ -21,6 +21,7 @@ class Item extends Model
         'name',
         'type',
         'unit',
+        'image_path',
         'track_stock',
         'has_variants',
         'track_batch',

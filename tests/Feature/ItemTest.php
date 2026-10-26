@@ -10,6 +10,8 @@ use App\Models\Company;
 use App\Models\Item;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\Concerns\WithPermissions;
 use Tests\TestCase;
 
@@ -92,14 +94,88 @@ class ItemTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.0.itemCount', 1);
 
-        // update + hapus
+        // update + hapus; komisi null dari form dinormalisasi ke 0
         $api()->putJson("/api/v1/companies/{$company->id}/items/{$barangId}", [
             'code' => 'OLI-01', 'name' => 'Oli Premium', 'type' => 'barang', 'unit' => 'pcs',
-        ])->assertOk()->assertJsonPath('data.name', 'Oli Premium');
+            'commission_type' => null, 'commission_value' => null,
+        ])->assertOk()
+            ->assertJsonPath('data.name', 'Oli Premium')
+            ->assertJsonPath('data.commissionType', null)
+            ->assertJsonPath('data.commissionValue', '0.00');
 
         $api()->deleteJson("/api/v1/companies/{$company->id}/items/{$jasaId}")
             ->assertOk();
         $this->assertSoftDeleted('items', ['id' => $jasaId]);
+    }
+
+    public function test_gambar_item_upload_ganti_hapus_dan_scope(): void
+    {
+        Storage::fake('public');
+
+        $user = $this->auth();
+        [$company] = $this->companyWithBranch('A');
+        [$other] = $this->companyWithBranch('B');
+        $this->owner($user, $company);
+        $this->owner($user, $other);
+        $item = Item::create([
+            'company_id' => $company->id, 'code' => 'OLI-01', 'name' => 'Oli',
+            'type' => 'barang', 'unit' => 'pcs',
+        ]);
+        $api = fn () => $this->actingAs($user, 'sanctum');
+        $url = "/api/v1/companies/{$company->id}/items/{$item->id}/image";
+
+        $upload = $api()->post($url, [
+            'image' => UploadedFile::fake()->image('oli.jpg', 800, 600),
+        ], ['Accept' => 'application/json'])
+            ->assertOk()
+            ->assertJsonPath('data.imagePath', fn ($path) => is_string($path) && str_starts_with($path, 'item-images/'));
+
+        $firstPath = $upload->json('data.imagePath');
+        $this->assertSame('/storage/'.$firstPath, $upload->json('data.imageUrl'));
+        Storage::disk('public')->assertExists($firstPath);
+
+        $api()->getJson("/api/v1/companies/{$company->id}/items/{$item->id}")
+            ->assertOk()
+            ->assertJsonPath('data.imageUrl', '/storage/'.$firstPath);
+
+        $replacement = $api()->post($url, [
+            'image' => UploadedFile::fake()->image('oli-baru.png', 640, 480),
+        ], ['Accept' => 'application/json'])->assertOk();
+
+        $secondPath = $replacement->json('data.imagePath');
+        $this->assertNotSame($firstPath, $secondPath);
+        Storage::disk('public')->assertMissing($firstPath);
+        Storage::disk('public')->assertExists($secondPath);
+
+        // File bukan gambar ditolak.
+        $api()->post($url, [
+            'image' => UploadedFile::fake()->create('catatan.txt', 10, 'text/plain'),
+        ], ['Accept' => 'application/json'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('image');
+
+        // Item perusahaan lain tetap 404 walau user punya akses ke perusahaan itu.
+        $foreignUrl = "/api/v1/companies/{$other->id}/items/{$item->id}/image";
+        $api()->post($foreignUrl, [
+            'image' => UploadedFile::fake()->image('asing.jpg'),
+        ], ['Accept' => 'application/json'])->assertNotFound();
+
+        $api()->deleteJson($url)
+            ->assertOk()
+            ->assertJsonPath('data.imagePath', null)
+            ->assertJsonPath('data.imageUrl', null);
+        Storage::disk('public')->assertMissing($secondPath);
+
+        // Hapus item juga membersihkan file gambar.
+        $thirdPath = $api()->post($url, [
+            'image' => UploadedFile::fake()->image('oli-final.jpg'),
+        ], ['Accept' => 'application/json'])->json('data.imagePath');
+        Storage::disk('public')->assertExists($thirdPath);
+
+        $api()->deleteJson("/api/v1/companies/{$company->id}/items/{$item->id}")
+            ->assertOk();
+        Storage::disk('public')->assertMissing($thirdPath);
+        $this->assertSoftDeleted('items', ['id' => $item->id]);
     }
 
     public function test_harga_per_cabang_dan_scope(): void

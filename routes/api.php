@@ -71,6 +71,8 @@ Route::middleware(['throttle:api', 'company.team'])->prefix('v1')->group(functio
         Route::get('/companies/{company}/items/{item}', [ItemController::class, 'show']);
         Route::put('/companies/{company}/items/{item}', [ItemController::class, 'update'])->middleware('permission:katalog.kelola');
         Route::delete('/companies/{company}/items/{item}', [ItemController::class, 'destroy'])->middleware('permission:katalog.kelola');
+        Route::post('/companies/{company}/items/{item}/image', [ItemController::class, 'uploadImage'])->middleware('permission:katalog.kelola');
+        Route::delete('/companies/{company}/items/{item}/image', [ItemController::class, 'deleteImage'])->middleware('permission:katalog.kelola');
         Route::get('/companies/{company}/items/{item}/prices/{branch}', [ItemController::class, 'price']);
         Route::put('/companies/{company}/items/{item}/prices/{branch}', [ItemController::class, 'setPrice'])->middleware('permission:harga.atur');
         Route::get('/companies/{company}/branches/{branch}/stock', [StockController::class, 'index']);

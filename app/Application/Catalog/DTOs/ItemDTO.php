@@ -17,6 +17,8 @@ final readonly class ItemDTO
         public string $name,
         public string $type,
         public ?string $unit,
+        public ?string $imagePath,
+        public ?string $imageUrl,
         public bool $trackStock,
         public bool $hasVariants,
         public bool $trackBatch,
@@ -31,6 +33,8 @@ final readonly class ItemDTO
 
     public static function fromModel(Item $item): self
     {
+        $imagePath = $item->image_path;
+
         return new self(
             id: $item->id,
             companyId: $item->company_id,
@@ -40,6 +44,8 @@ final readonly class ItemDTO
             name: $item->name,
             type: $item->type,
             unit: $item->unit,
+            imagePath: $imagePath,
+            imageUrl: $imagePath !== null ? '/storage/'.ltrim($imagePath, '/') : null,
             trackStock: (bool) $item->track_stock,
             hasVariants: (bool) $item->has_variants,
             trackBatch: (bool) $item->track_batch,
