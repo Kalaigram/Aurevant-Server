@@ -36,7 +36,7 @@ final class CreateSale
     ) {}
 
     /**
-     * @param  list<array{item_id: int, qty: float, discount_percent?: float, discount_amount?: float, tax_percent?: float}>  $lines
+     * @param  list<array{item_id: int, qty: float, price?: float, discount_percent?: float, discount_amount?: float, tax_percent?: float}>  $lines
      * @param  list<array{method: string, amount: float, tendered?: float|null, reference?: string|null}>  $payments
      * @return array{sale: SaleDTO, duplicate: bool}
      */
@@ -49,6 +49,7 @@ final class CreateSale
         ?string $idempotencyKey,
         ?int $customerId = null,
         ?int $serviceOrderId = null,
+        bool $deductServiceConsumables = true,
     ): array {
         $shift = $this->shifts->findOpenForBranch($branch);
         if ($shift === null) {
@@ -66,9 +67,9 @@ final class CreateSale
 
         $this->validatePayments($payments);
 
-        return DB::transaction(function () use ($company, $branch, $cashier, $shift, $lines, $payments, $idempotencyKey, $customerId, $serviceOrderId) {
+        return DB::transaction(function () use ($company, $branch, $cashier, $shift, $lines, $payments, $idempotencyKey, $customerId, $serviceOrderId, $deductServiceConsumables) {
             $number = $this->nextNumber($branch);
-            $computed = $this->computeLines($company, $branch, $lines);
+            $computed = $this->computeLines($company, $branch, $lines, $deductServiceConsumables);
             $this->guardPaymentsTotal($computed['grandTotal'], $payments);
 
             $stockNotes = 'Nota '.$number;
@@ -108,7 +109,7 @@ final class CreateSale
     }
 
     /** @return array{rows: list<array<string, mixed>>, stockJobs: list<array<string, mixed>>, subtotal: float, discountTotal: float, taxTotal: float, grandTotal: float} */
-    private function computeLines(Company $company, Branch $branch, array $lines): array
+    private function computeLines(Company $company, Branch $branch, array $lines, bool $deductServiceConsumables): array
     {
         $rows = [];
         $stockJobs = [];
@@ -118,15 +119,26 @@ final class CreateSale
 
         foreach ($lines as $line) {
             $item = $this->items->findForCompany($company, (int) $line['item_id']) ?? abort(404);
-            $priceRow = $this->prices->findForItemBranch($item->id, $branch->id);
-            if ($priceRow === null) {
-                throw ValidationException::withMessages([
-                    'items' => 'Harga item '.$item->code.' belum diatur di cabang ini.',
-                ]);
+
+            if (array_key_exists('price', $line)) {
+                $price = (float) $line['price'];
+                if ($price < 0) {
+                    throw ValidationException::withMessages([
+                        'items' => 'Harga item '.$item->code.' tidak valid.',
+                    ]);
+                }
+            } else {
+                $priceRow = $this->prices->findForItemBranch($item->id, $branch->id);
+                if ($priceRow === null) {
+                    throw ValidationException::withMessages([
+                        'items' => 'Harga item '.$item->code.' belum diatur di cabang ini.',
+                    ]);
+                }
+
+                $price = (float) $priceRow->price;
             }
 
             $qty = (float) $line['qty'];
-            $price = (float) $priceRow->price;
             $discPct = (float) ($line['discount_percent'] ?? 0);
             $discAmt = (float) ($line['discount_amount'] ?? 0);
             $taxPct = (float) ($line['tax_percent'] ?? 0);
@@ -168,7 +180,7 @@ final class CreateSale
                 $stockJobs[] = ['item_id' => $item->id, 'type' => 'penjualan', 'qty' => $qty, 'unit_cost' => null];
             }
 
-            if ($item->type === 'jasa') {
+            if ($item->type === 'jasa' && $deductServiceConsumables) {
                 $item->loadMissing('consumables');
                 foreach ($item->consumables as $recipe) {
                     $stockJobs[] = [

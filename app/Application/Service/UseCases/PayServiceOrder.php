@@ -6,7 +6,6 @@ namespace App\Application\Service\UseCases;
 
 use App\Application\Sale\DTOs\SaleDTO;
 use App\Application\Sale\UseCases\CreateSale;
-use App\Domain\Catalog\Repositories\ItemPriceRepositoryInterface;
 use App\Domain\Service\Repositories\ServiceOrderRepositoryInterface;
 use App\Models\Branch;
 use App\Models\Company;
@@ -18,7 +17,6 @@ final class PayServiceOrder
 {
     public function __construct(
         private ServiceOrderRepositoryInterface $orders,
-        private ItemPriceRepositoryInterface $prices,
         private CreateSale $createSale,
     ) {}
 
@@ -44,15 +42,12 @@ final class PayServiceOrder
         $lines = [];
         $estimate = 0.0;
         foreach ($order->items as $line) {
-            $price = $this->prices->findForItemBranch($line->item_id, $branch->id);
-            if ($price === null) {
-                throw ValidationException::withMessages([
-                    'items' => 'Harga jasa berubah dan belum diatur di cabang ini.',
-                ]);
-            }
-
-            $lines[] = ['item_id' => $line->item_id, 'qty' => (float) $line->qty];
-            $estimate += (float) $price->price * (float) $line->qty;
+            $lines[] = [
+                'item_id' => $line->item_id,
+                'qty' => (float) $line->qty,
+                'price' => (float) $line->price,
+            ];
+            $estimate += (float) $line->price * (float) $line->qty;
         }
 
         $deposit = (float) $order->deposit_amount;
@@ -73,7 +68,7 @@ final class PayServiceOrder
 
         $result = ($this->createSale)(
             $company, $branch, $cashier, $lines, $allPayments, $idempotencyKey,
-            $order->customer_id, $order->id,
+            $order->customer_id, $order->id, deductServiceConsumables: false,
         );
 
         $order->sale_id = $result['sale']->id;

@@ -101,6 +101,10 @@ class ServiceOrderTest extends TestCase
         // bahan kepotong 1 saat selesai
         $this->assertEquals('9.000', $stok());
 
+        // harga berubah setelah order dibuat: nota tetap memakai harga snapshot
+        ItemPrice::query()->where('item_id', $servis->id)->where('branch_id', $branch->id)
+            ->update(['price' => 200000]);
+
         // bayar sisa 80000 tunai, 20000 dari DP
         $nota = $api()->postJson("{$base}/{$id}/pay", [
             'payments' => [['method' => 'tunai', 'amount' => 80000]],
@@ -109,6 +113,9 @@ class ServiceOrderTest extends TestCase
         $this->assertEquals('100000.00', $nota['grandTotal']);
         $methods = collect($nota['payments'])->pluck('method')->all();
         $this->assertEquals(['dp', 'tunai'], $methods);
+
+        // bahan tidak terpotong dua kali saat bayar
+        $this->assertEquals('9.000', $stok());
 
         $api()->getJson("{$base}/{$id}")->assertJsonPath('data.status', 'dibayar');
     }
