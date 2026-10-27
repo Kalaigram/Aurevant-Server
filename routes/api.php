@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\V1\PayrollController;
 use App\Http\Controllers\Api\V1\PlanController;
 use App\Http\Controllers\Api\V1\PurchaseOrderController;
 use App\Http\Controllers\Api\V1\ReportController;
+use App\Http\Controllers\Api\V1\ReportExportController;
 use App\Http\Controllers\Api\V1\SaleController;
 use App\Http\Controllers\Api\V1\ScheduleController;
 use App\Http\Controllers\Api\V1\ServiceOrderController;
@@ -165,6 +166,9 @@ Route::middleware(['throttle:api'])->prefix('v1')->group(function (): void {
         Route::post('/companies/{company}/subscription-invoices', [SubscriptionInvoiceController::class, 'store'])->middleware('super.admin');
         Route::get('/companies/{company}/subscription-invoices/{invoice}', [SubscriptionInvoiceController::class, 'show']);
         Route::post('/companies/{company}/subscription-invoices/{invoice}/pay', [SubscriptionInvoiceController::class, 'pay'])->middleware('super.admin');
+        Route::get('/companies/{company}/reports/{report}/export', ReportExportController::class)
+            ->whereIn('report', ['profit-loss', 'daily', 'cash-flow', 'balance-sheet', 'trial-balance', 'consolidation'])
+            ->middleware('permission:keuangan.lihat');
         Route::get('/companies/{company}/reports/daily', [ReportController::class, 'daily'])->middleware('permission:keuangan.lihat');
         Route::get('/companies/{company}/reports/consolidation', [ReportController::class, 'consolidation'])->middleware('permission:laporan.konsolidasi');
         Route::post('/companies/{company}/reports/refresh', [ReportController::class, 'refresh'])->middleware('permission:laporan.konsolidasi');
