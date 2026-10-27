@@ -17,6 +17,7 @@ final class NotificationTypes
             'po.diajukan',
             'po.disetujui',
             'po.diterima',
+            'po.retur',
             'sale.void',
             'sale.retur',
             'opname.disetujui',

@@ -15,6 +15,7 @@ use App\Models\Receivable;
 use App\Models\Sale;
 use App\Models\SaleReturn;
 use App\Models\SupplierBill;
+use App\Models\SupplierReturn;
 
 /** Aturan posting tiap dokumen. Idempoten per sumber. */
 final class LedgerPoster
@@ -143,6 +144,30 @@ final class LedgerPoster
                 ['account' => '1310', 'debit' => round($totalValue, 2)],
                 ['account' => '2110', 'credit' => round($totalValue, 2)],
             ]
+        );
+    }
+
+    public function forSupplierReturn(PurchaseOrder $order, SupplierReturn $retur, float $inventoryValue): void
+    {
+        $this->ledger->ensureDefaultAccounts($order->company);
+
+        $total = (float) $retur->total;
+        $inventoryValue = round($inventoryValue, 2);
+        $difference = round($total - $inventoryValue, 2);
+
+        $lines = [
+            ['account' => '2110', 'debit' => $total],
+            ['account' => '1310', 'credit' => $inventoryValue],
+        ];
+        if ($difference > 0) {
+            $lines[] = ['account' => '5100', 'credit' => $difference];
+        } elseif ($difference < 0) {
+            $lines[] = ['account' => '5100', 'debit' => abs($difference)];
+        }
+
+        $this->poster->post(
+            $order->company, $order->branch_id, now()->toDateString(), 'Retur supplier PO #'.$order->id,
+            'supplier_return', $retur->id, $lines,
         );
     }
 

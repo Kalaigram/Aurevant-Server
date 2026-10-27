@@ -19,6 +19,15 @@ final class SupplierBillEloquentRepository implements SupplierBillRepositoryInte
         );
     }
 
+    public function findForOrder(Company $company, PurchaseOrder $order, bool $lock = false): ?SupplierBill
+    {
+        return SupplierBill::query()
+            ->where('company_id', $company->id)
+            ->where('purchase_order_id', $order->id)
+            ->when($lock, fn ($query) => $query->lockForUpdate())
+            ->first();
+    }
+
     public function save(SupplierBill $bill): SupplierBill
     {
         $bill->save();

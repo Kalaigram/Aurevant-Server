@@ -97,4 +97,16 @@ class StockLedgerTest extends TestCase
         $this->assertEquals(100, $void->newBalance);
         $this->assertEquals(60000, $void->newAvgCost);
     }
+
+    public function test_retur_supplier_mengurangi_stok_dengan_hpp_rata_rata(): void
+    {
+        $ledger = new StockLedger;
+
+        $hasil = $ledger->apply(10, 40000, 'retur_supplier', 3, 45000);
+
+        $this->assertEquals(-3, $hasil->qtyDelta);
+        $this->assertEquals(7, $hasil->newBalance);
+        $this->assertEquals(40000, $hasil->newAvgCost);
+        $this->assertEquals(120000, $hasil->hppAmount);
+    }
 }

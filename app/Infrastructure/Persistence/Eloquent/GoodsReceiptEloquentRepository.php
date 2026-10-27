@@ -14,10 +14,20 @@ final class GoodsReceiptEloquentRepository implements GoodsReceiptRepositoryInte
     public function paginateForOrder(PurchaseOrder $order, int $perPage): LengthAwarePaginator
     {
         return GoodsReceipt::query()
-            ->with('items.item')
+            ->with(['items.item', 'items.returnItems'])
             ->where('purchase_order_id', $order->id)
             ->orderByDesc('id')
             ->paginate($perPage);
+    }
+
+    public function findForOrder(PurchaseOrder $order, int $id, bool $lock = false): ?GoodsReceipt
+    {
+        return GoodsReceipt::query()
+            ->with(['items.item', 'items.returnItems'])
+            ->where('purchase_order_id', $order->id)
+            ->whereKey($id)
+            ->when($lock, fn ($query) => $query->lockForUpdate())
+            ->first();
     }
 
     public function createWithItems(PurchaseOrder $order, array $attributes, array $items): GoodsReceipt

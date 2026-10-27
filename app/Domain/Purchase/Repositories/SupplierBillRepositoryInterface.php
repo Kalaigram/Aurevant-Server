@@ -12,5 +12,7 @@ interface SupplierBillRepositoryInterface
 {
     public function findOrCreateForOrder(Company $company, PurchaseOrder $order): SupplierBill;
 
+    public function findForOrder(Company $company, PurchaseOrder $order, bool $lock = false): ?SupplierBill;
+
     public function save(SupplierBill $bill): SupplierBill;
 }

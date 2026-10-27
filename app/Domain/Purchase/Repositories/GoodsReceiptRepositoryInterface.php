@@ -13,5 +13,7 @@ interface GoodsReceiptRepositoryInterface
     /** @return LengthAwarePaginator<int, GoodsReceipt> */
     public function paginateForOrder(PurchaseOrder $order, int $perPage): LengthAwarePaginator;
 
+    public function findForOrder(PurchaseOrder $order, int $id, bool $lock = false): ?GoodsReceipt;
+
     public function createWithItems(PurchaseOrder $order, array $attributes, array $items): GoodsReceipt;
 }

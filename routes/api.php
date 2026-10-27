@@ -34,6 +34,7 @@ use App\Http\Controllers\Api\V1\StockTransferController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
 use App\Http\Controllers\Api\V1\SubscriptionInvoiceController;
 use App\Http\Controllers\Api\V1\SupplierController;
+use App\Http\Controllers\Api\V1\SupplierReturnController;
 use App\Http\Controllers\Api\V1\TenantController;
 use Illuminate\Support\Facades\Route;
 
@@ -107,6 +108,8 @@ Route::middleware(['throttle:api'])->prefix('v1')->group(function (): void {
         Route::post('/companies/{company}/purchase-orders/{order}/receive', [PurchaseOrderController::class, 'receive'])->middleware('permission:po.setujui');
         Route::post('/companies/{company}/purchase-orders/{order}/cancel', [PurchaseOrderController::class, 'cancel'])->middleware('permission:po.setujui');
         Route::get('/companies/{company}/purchase-orders/{order}/receipts', [PurchaseOrderController::class, 'receipts']);
+        Route::get('/companies/{company}/purchase-orders/{order}/returns', [SupplierReturnController::class, 'index']);
+        Route::post('/companies/{company}/purchase-orders/{order}/receipts/{receipt}/returns', [SupplierReturnController::class, 'store'])->middleware('permission:po.setujui');
         Route::post('/companies/{company}/branches/{branch}/shifts', [ShiftController::class, 'open'])->middleware('permission:shift.buka');
         Route::get('/companies/{company}/branches/{branch}/shifts/{shift}', [ShiftController::class, 'show']);
         Route::post('/companies/{company}/branches/{branch}/shifts/{shift}/close', [ShiftController::class, 'close'])->middleware('permission:shift.tutup');
