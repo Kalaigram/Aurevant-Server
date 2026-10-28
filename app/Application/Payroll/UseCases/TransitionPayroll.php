@@ -6,9 +6,12 @@ namespace App\Application\Payroll\UseCases;
 
 use App\Application\Audit\Audit;
 use App\Application\Ledger\LedgerPoster;
+use App\Application\Notify\Notifier;
 use App\Application\Payroll\DTOs\PayrollPeriodDTO;
 use App\Domain\Payroll\Repositories\PayrollRepositoryInterface;
+use App\Models\PayrollLine;
 use App\Models\PayrollPeriod;
+use App\Models\User;
 use Illuminate\Validation\ValidationException;
 
 final class TransitionPayroll
@@ -35,6 +38,27 @@ final class TransitionPayroll
     {
         $dto = $this->move($period, 'disetujui', 'dibayar', 'payroll.pay');
         ($this->ledgerPoster)->forPayrollPay($period, $this->payrolls->grossForPeriod($period));
+
+        $userIds = PayrollLine::query()
+            ->where('payroll_period_id', $period->id)
+            ->distinct()
+            ->pluck('user_id');
+
+        foreach ($userIds as $userId) {
+            $user = User::query()->find($userId);
+            if ($user === null) {
+                continue;
+            }
+
+            Notifier::toUser(
+                $period->company,
+                $user,
+                'payroll.dibayar',
+                'Gaji '.$period->name.' telah dibayar',
+                'Slip gaji sudah tersedia. Buka menu Penggajian untuk melihat rinciannya.',
+                '/payroll',
+            );
+        }
 
         return $dto;
     }

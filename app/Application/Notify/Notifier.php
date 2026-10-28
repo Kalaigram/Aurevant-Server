@@ -22,7 +22,7 @@ final class Notifier
         string $title,
         ?string $body = null,
         ?string $link = null,
-        ?int $exceptUserId = null,
+        int|array|null $exceptUserIds = null,
     ): int {
         setPermissionsTeamId($company->id);
 
@@ -30,7 +30,18 @@ final class Notifier
             ->whereHas('roles', fn ($query) => $query->where('roles.company_id', $company->id))
             ->get();
 
-        return self::deliver($company, $users, $type, $title, $body, $link, $exceptUserId, $permissions);
+        return self::deliver($company, $users, $type, $title, $body, $link, $exceptUserIds, $permissions);
+    }
+
+    public static function toUser(
+        Company $company,
+        User $user,
+        string $type,
+        string $title,
+        ?string $body = null,
+        ?string $link = null,
+    ): int {
+        return self::deliver($company, collect([$user]), $type, $title, $body, $link, null, null);
     }
 
     /** Kirim ke semua pemegang role tertentu di company ini (mis. Pemilik). */
@@ -72,13 +83,17 @@ final class Notifier
         string $title,
         ?string $body,
         ?string $link,
-        ?int $exceptUserId,
+        int|array|null $exceptUserIds,
         ?array $permissions,
     ): int {
         $sent = 0;
+        $except = $exceptUserIds === null
+            ? []
+            : (array) $exceptUserIds;
+        $except = array_map('intval', $except);
 
         foreach ($users as $user) {
-            if ($exceptUserId !== null && $user->id === $exceptUserId) {
+            if (in_array($user->id, $except, true)) {
                 continue;
             }
 

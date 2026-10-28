@@ -10,6 +10,8 @@ use App\Models\Item;
 use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\Concerns\WithPermissions;
 use Tests\TestCase;
 
@@ -60,6 +62,32 @@ class FinanceTest extends TestCase
             ->assertOk()->json('data');
         $this->assertEquals(500000.0, $lr['beban']);
         $this->assertEquals(-500000.0, $lr['laba_bersih']);
+    }
+
+    public function test_biaya_dengan_bukti_dan_aktor(): void
+    {
+        Storage::fake('public');
+        [$user, $company, $branch] = $this->setupWorld();
+        $api = fn () => $this->actingAs($user, 'sanctum');
+        $base = "/api/v1/companies/{$company->id}";
+
+        $catId = $api()->postJson("{$base}/expense-categories", ['name' => 'Listrik'])
+            ->assertCreated()->json('data.id');
+
+        $response = $api()->post("{$base}/expenses", [
+            'branch_id' => $branch->id,
+            'expense_category_id' => $catId,
+            'amount' => 500000,
+            'date' => now()->toDateString(),
+            'description' => 'Listrik Oktober',
+            'proof' => UploadedFile::fake()->image('nota.jpg'),
+        ])->assertCreated();
+
+        $proofUrl = $response->json('data.proofUrl');
+        $this->assertStringStartsWith('/storage/bukti-biaya/', $proofUrl);
+        Storage::disk('public')->assertExists(str_replace('/storage/', '', $proofUrl));
+
+        $this->assertSame($user->id, $response->json('data.userId'));
     }
 
     public function test_bayar_hutang_dan_aging(): void

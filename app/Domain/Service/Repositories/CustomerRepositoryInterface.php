@@ -15,6 +15,9 @@ interface CustomerRepositoryInterface
 
     public function findForCompany(Company $company, int $id): ?Customer;
 
+    /** @return array<string, mixed> */
+    public function profileForCompany(Company $company, Customer $customer): array;
+
     public function createForCompany(Company $company, array $attributes): Customer;
 
     public function update(Customer $customer, array $attributes): Customer;

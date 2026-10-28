@@ -10,6 +10,7 @@ use App\Application\Service\UseCases\CompleteServiceOrder;
 use App\Application\Service\UseCases\CreateServiceOrder;
 use App\Application\Service\UseCases\ListServiceOrders;
 use App\Application\Service\UseCases\PayServiceOrder;
+use App\Application\Service\UseCases\PrintServiceEstimate;
 use App\Application\Service\UseCases\TransitionServiceOrder;
 use App\Domain\Branch\Repositories\BranchRepositoryInterface;
 use App\Domain\Service\Repositories\ServiceOrderRepositoryInterface;
@@ -18,9 +19,11 @@ use App\Models\Branch;
 use App\Models\Company;
 use App\Models\ServiceOrder;
 use App\Shared\Responses\ApiResponse;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ServiceOrderController extends Controller
 {
@@ -30,6 +33,8 @@ class ServiceOrderController extends Controller
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'status' => ['sometimes', 'string', Rule::in(['baru', 'diproses', 'selesai', 'dibayar', 'dibatalkan'])],
             'q' => ['sometimes', 'string', 'max:100'],
+            'scheduled_from' => ['sometimes', 'date'],
+            'scheduled_to' => ['sometimes', 'date', 'after_or_equal:scheduled_from'],
         ]);
 
         return ApiResponse::paginated(
@@ -38,6 +43,8 @@ class ServiceOrderController extends Controller
                 (int) ($validated['per_page'] ?? 15),
                 $validated['status'] ?? null,
                 $validated['q'] ?? null,
+                $validated['scheduled_from'] ?? null,
+                $validated['scheduled_to'] ?? null,
             ),
             'Daftar order jasa.'
         );
@@ -47,10 +54,11 @@ class ServiceOrderController extends Controller
     {
         $validated = $request->validate([
             'customer_id' => ['nullable', 'integer'],
+            'package_id' => ['nullable', 'integer'],
             'scheduled_at' => ['nullable', 'date'],
             'note' => ['nullable', 'string', 'max:500'],
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.item_id' => ['required', 'integer'],
+            'items' => ['nullable', 'array', 'min:1', 'required_without:package_id'],
+            'items.*.item_id' => ['required', 'integer', 'distinct'],
             'items.*.qty' => ['required', 'numeric', 'gt:0'],
         ]);
 
@@ -58,10 +66,11 @@ class ServiceOrderController extends Controller
             $useCase(
                 $company,
                 $this->scopedBranch($company, $branch, $branches),
-                $validated['items'],
+                $validated['items'] ?? [],
                 $validated['customer_id'] ?? null,
                 $validated['scheduled_at'] ?? null,
                 $validated['note'] ?? null,
+                $validated['package_id'] ?? null,
             ),
             'Order jasa dibuat.',
             201
@@ -73,6 +82,20 @@ class ServiceOrderController extends Controller
         return ApiResponse::success(
             ServiceOrderDTO::fromModel($this->scoped($company, $branch, $order, $branches, $orders)),
             'Detail order jasa.'
+        );
+    }
+
+    public function estimate(Company $company, int $branch, int $order, BranchRepositoryInterface $branches, ServiceOrderRepositoryInterface $orders, PrintServiceEstimate $useCase): StreamedResponse
+    {
+        $scopedBranch = $this->scopedBranch($company, $branch, $branches);
+        $found = $orders->findForBranch($scopedBranch, $order) ?? abort(404);
+
+        $pdf = Pdf::loadView('estimates.service-order', $useCase($company, $scopedBranch, $found));
+
+        return response()->streamDownload(
+            fn () => print ($pdf->output()),
+            "estimasi-jasa-{$found->id}.pdf",
+            ['Content-Type' => 'application/pdf'],
         );
     }
 

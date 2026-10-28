@@ -28,8 +28,8 @@ final class ConsolidationReport
                 'branchId' => $branch->id,
                 'branchCode' => $branch->code,
                 'branchName' => $branch->name,
-                'omzet' => 0.0, 'transactions' => 0, 'hpp' => 0.0,
-                'refunds' => 0.0, 'net' => 0.0,
+                'omzet' => 0.0, 'transactions' => 0, 'avgTicket' => 0.0,
+                'hpp' => 0.0, 'margin' => 0.0, 'refunds' => 0.0, 'net' => 0.0,
             ];
         }
 
@@ -43,12 +43,25 @@ final class ConsolidationReport
         }
         unset($slot);
 
+        foreach ($perBranch as &$slot) {
+            $slot['avgTicket'] = $slot['transactions'] > 0
+                ? round($slot['omzet'] / $slot['transactions'], 2)
+                : 0.0;
+            $slot['margin'] = round($slot['net'] - $slot['hpp'], 2);
+        }
+        unset($slot);
+
         $grand = ['omzet' => 0.0, 'transactions' => 0, 'hpp' => 0.0, 'refunds' => 0.0, 'net' => 0.0];
         foreach ($perBranch as $slot) {
             foreach (array_keys($grand) as $key) {
                 $grand[$key] += $slot[$key];
             }
         }
+
+        $grand['avgTicket'] = $grand['transactions'] > 0
+            ? round($grand['omzet'] / $grand['transactions'], 2)
+            : 0.0;
+        $grand['margin'] = round($grand['net'] - $grand['hpp'], 2);
 
         return ['branches' => array_values($perBranch), 'grand' => $grand];
     }

@@ -110,6 +110,51 @@ class ReportTest extends TestCase
         )->assertOk()->assertJsonPath('data.rows.0.omzet', '0.00');
     }
 
+    public function test_top_produk_dan_perbandingan_cabang(): void
+    {
+        [$user, $company, $a, $b, $item] = $this->setupWorld();
+        $today = now()->toDateString();
+        $api = fn () => $this->api($user);
+
+        $this->openShift($user, $company, $a);
+        $this->openShift($user, $company, $b);
+        $this->stockIn($user, $company, $a, $item, 100);
+        $this->stockIn($user, $company, $b, $item, 100);
+
+        $this->sell($user, $company, $a, $item, 2);
+        $this->sell($user, $company, $b, $item, 1);
+
+        $top = $api()->getJson(
+            "/api/v1/companies/{$company->id}/reports/top-products?from={$today}&to={$today}"
+        )->assertOk()->json('data');
+        $this->assertSame('OLI-01', $top['rows'][0]['code']);
+        $this->assertEquals(3.0, $top['rows'][0]['qty']);
+        $this->assertEquals(155000.0, $top['rows'][0]['revenue']);
+        $this->assertEquals(120000.0, $top['rows'][0]['hpp']);
+        $this->assertEquals(35000.0, $top['rows'][0]['margin']);
+        $this->assertEquals(2, $top['rows'][0]['transactions']);
+
+        $topA = $api()->getJson(
+            "/api/v1/companies/{$company->id}/reports/top-products?from={$today}&to={$today}&branch_id={$a->id}"
+        )->assertOk()->json('data');
+        $this->assertEquals(2.0, $topA['rows'][0]['qty']);
+        $this->assertEquals(100000.0, $topA['rows'][0]['revenue']);
+        $this->assertEquals(1, $topA['rows'][0]['transactions']);
+
+        $konsolidasi = $api()->getJson(
+            "/api/v1/companies/{$company->id}/reports/consolidation?from={$today}&to={$today}"
+        )->assertOk()->json('data');
+        $this->assertEquals(77500.0, $konsolidasi['grand']['avgTicket']);
+        $this->assertEquals(35000.0, $konsolidasi['grand']['margin']);
+        $this->assertEquals(100000.0, $konsolidasi['branches'][0]['avgTicket']);
+        $this->assertEquals(55000.0, $konsolidasi['branches'][1]['avgTicket']);
+
+        $karyawan = User::factory()->create();
+        $this->actingAs($karyawan, 'sanctum')->getJson(
+            "/api/v1/companies/{$company->id}/reports/top-products?from={$today}&to={$today}"
+        )->assertForbidden();
+    }
+
     public function test_retur_masuk_refund_dan_refresh_manual(): void
     {
         [$user, $company, $a, $b, $item] = $this->setupWorld();

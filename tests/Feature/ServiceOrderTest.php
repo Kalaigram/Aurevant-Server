@@ -10,6 +10,7 @@ use App\Models\Customer;
 use App\Models\Item;
 use App\Models\ItemConsumable;
 use App\Models\ItemPrice;
+use App\Models\ServicePackage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\WithPermissions;
@@ -151,6 +152,76 @@ class ServiceOrderTest extends TestCase
         $this->assertSame('Bu Sari', $page['data'][0]['customerName']);
     }
 
+    public function test_agenda_order_jasa_filter_rentang_tanggal(): void
+    {
+        [$user, $teknisi, $company, $branch, $customer, $servis, $oli] = $this->setupWorld();
+        $api = fn () => $this->actingAs($user, 'sanctum');
+        $base = "/api/v1/companies/{$company->id}/branches/{$branch->id}/service-orders";
+
+        $awal = $api()->postJson($base, [
+            'customer_id' => $customer->id,
+            'scheduled_at' => '2026-10-05T09:00:00',
+            'items' => [['item_id' => $servis->id, 'qty' => 1]],
+        ])->assertCreated()->json('data.id');
+
+        $akhir = $api()->postJson($base, [
+            'customer_id' => $customer->id,
+            'scheduled_at' => '2026-10-06T14:30:00',
+            'items' => [['item_id' => $servis->id, 'qty' => 1]],
+        ])->assertCreated()->json('data.id');
+
+        $api()->postJson($base, [
+            'customer_id' => $customer->id,
+            'scheduled_at' => '2026-10-10T08:00:00',
+            'items' => [['item_id' => $servis->id, 'qty' => 1]],
+        ])->assertCreated();
+
+        $api()->postJson($base, [
+            'customer_id' => $customer->id,
+            'items' => [['item_id' => $servis->id, 'qty' => 1]],
+        ])->assertCreated();
+
+        $page = $api()->getJson("{$base}?scheduled_from=2026-10-05&scheduled_to=2026-10-06")
+            ->assertOk()->json();
+
+        $this->assertSame(2, $page['meta']['total']);
+        $this->assertSame([$awal, $akhir], array_column($page['data'], 'id'));
+        $this->assertStringStartsWith('2026-10-05T09:00:00', $page['data'][0]['scheduledAt']);
+        $this->assertStringStartsWith('2026-10-06T14:30:00', $page['data'][1]['scheduledAt']);
+
+        $api()->getJson("{$base}?scheduled_from=2026-10-07&scheduled_to=2026-10-06")
+            ->assertUnprocessable();
+    }
+
+    public function test_estimasi_jasa_pdf_dibatasi_cabang_dan_tenant(): void
+    {
+        [$user, $teknisi, $company, $branch, $customer, $servis, $oli] = $this->setupWorld();
+        $api = fn () => $this->actingAs($user, 'sanctum');
+        $base = "/api/v1/companies/{$company->id}/branches/{$branch->id}/service-orders";
+
+        $id = $api()->postJson($base, [
+            'customer_id' => $customer->id,
+            'scheduled_at' => '2026-10-05T09:00:00',
+            'note' => 'Servis rutin',
+            'items' => [['item_id' => $servis->id, 'qty' => 2]],
+        ])->assertCreated()->json('data.id');
+        $api()->postJson("{$base}/{$id}/deposit", ['amount' => 50000])->assertOk();
+
+        $this->app['auth']->forgetGuards();
+        $this->getJson("{$base}/{$id}/estimate")->assertUnauthorized();
+
+        $res = $api()->get("{$base}/{$id}/estimate");
+        $res->assertOk();
+        $this->assertStringContainsString('application/pdf', $res->headers->get('Content-Type'));
+        $this->assertStringContainsString("estimasi-jasa-{$id}.pdf", (string) $res->headers->get('Content-Disposition'));
+        $this->assertStringStartsWith('%PDF', $res->streamedContent());
+
+        $lain = User::factory()->create();
+        $b = Company::create(['name' => 'PT B', 'slug' => 'pt-b', 'status' => 'aktif']);
+        $this->owner($lain, $b);
+        $this->actingAs($lain, 'sanctum')->get("{$base}/{$id}/estimate")->assertForbidden();
+    }
+
     public function test_transisi_salah_dp_lebih_dan_guest(): void
     {
         [$user, $teknisi, $company, $branch, $customer, $servis, $oli] = $this->setupWorld();
@@ -185,5 +256,51 @@ class ServiceOrderTest extends TestCase
 
         // batal dari selesai: tolak
         $api()->postJson("{$base}/{$id}/cancel")->assertUnprocessable();
+    }
+
+    public function test_order_jasa_dari_paket_memakai_harga_paket(): void
+    {
+        [$user, $teknisi, $company, $branch, $customer, $servis, $oli] = $this->setupWorld();
+        $detail = Item::create([
+            'company_id' => $company->id, 'code' => 'SVC-02', 'name' => 'Cuci Detailing',
+            'type' => 'jasa', 'track_stock' => false,
+            'commission_type' => 'nominal', 'commission_value' => 5000,
+        ]);
+        ItemPrice::create(['item_id' => $detail->id, 'branch_id' => $branch->id, 'price' => 50000]);
+
+        $package = ServicePackage::create([
+            'company_id' => $company->id, 'code' => 'PAK-01', 'name' => 'Paket Hemat',
+            'price' => 120000, 'status' => 'aktif',
+        ]);
+        $package->items()->createMany([
+            ['item_id' => $servis->id, 'qty' => 1],
+            ['item_id' => $detail->id, 'qty' => 1],
+        ]);
+
+        $api = fn () => $this->actingAs($user, 'sanctum');
+        $base = "/api/v1/companies/{$company->id}/branches/{$branch->id}/service-orders";
+
+        $res = $api()->postJson($base, [
+            'customer_id' => $customer->id,
+            'package_id' => $package->id,
+        ])->assertCreated()
+            ->assertJsonPath('data.packageId', $package->id)
+            ->assertJsonPath('data.packageName', 'Paket Hemat')
+            ->assertJsonPath('data.total', '120000.00')
+            ->assertJsonPath('data.items.0.itemName', 'Servis Ringan')
+            ->assertJsonPath('data.items.0.price', '80000.00')
+            ->assertJsonPath('data.items.1.itemName', 'Cuci Detailing')
+            ->assertJsonPath('data.items.1.price', '40000.00');
+
+        $this->assertSame(2, count($res->json('data.items')));
+
+        $api()->postJson($base, [
+            'package_id' => $package->id,
+            'items' => [['item_id' => $servis->id, 'qty' => 1]],
+        ])->assertUnprocessable()->assertJsonPath('status', 'error');
+
+        $package->update(['status' => 'nonaktif']);
+        $api()->postJson($base, ['package_id' => $package->id])
+            ->assertUnprocessable()->assertJsonValidationErrors('package_id');
     }
 }

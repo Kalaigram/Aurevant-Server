@@ -30,6 +30,7 @@ class ForbiddenTest extends TestCase
             ['post', "{$c}/branches", []],
             ['post', "{$c}/categories", []],
             ['post', "{$c}/items", []],
+            ['post', "{$c}/service-packages", []],
             ['post', "{$c}/suppliers", []],
             ['post', "{$c}/purchase-orders", []],
             ['post', "{$b}/stock/movements", []],

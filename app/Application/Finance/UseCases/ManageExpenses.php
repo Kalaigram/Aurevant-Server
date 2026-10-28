@@ -7,9 +7,11 @@ namespace App\Application\Finance\UseCases;
 use App\Application\Audit\Audit;
 use App\Application\Finance\DTOs\ExpenseDTO;
 use App\Application\Ledger\LedgerPoster;
+use App\Application\Notify\Notifier;
 use App\Domain\Finance\Repositories\ExpenseRepositoryInterface;
 use App\Models\Company;
 use App\Models\Expense;
+use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -28,18 +30,33 @@ final class ManageExpenses
             ->through(fn ($expense) => ExpenseDTO::fromModel($expense));
     }
 
-    public function create(Company $company, array $attributes): ExpenseDTO
+    public function create(Company $company, array $attributes, ?User $actor = null, ?string $proofPath = null): ExpenseDTO
     {
         $this->assertCategory($company, (int) $attributes['expense_category_id']);
         $this->assertBranch($company, (int) $attributes['branch_id']);
 
-        $created = $this->expenses->createExpense($company, [...$attributes, 'status' => 'draft']);
+        $created = $this->expenses->createExpense($company, [
+            ...$attributes,
+            'status' => 'draft',
+            'user_id' => $actor?->id,
+            'proof_path' => $proofPath,
+        ]);
         Audit::record($company, $created->branch_id, 'biaya.catat', 'expense', $created->id);
+
+        Notifier::toPermissioned(
+            $company,
+            ['biaya.setujui', 'keuangan.lihat'],
+            'biaya.diajukan',
+            'Biaya '.number_format((float) $created->amount, 0, ',', '.').' menunggu persetujuan.',
+            $created->description,
+            '/expenses',
+            $actor !== null ? [$actor->id] : null,
+        );
 
         return ExpenseDTO::fromModel($created);
     }
 
-    public function approve(Company $company, Expense $expense): ExpenseDTO
+    public function approve(Company $company, Expense $expense, ?User $decider = null): ExpenseDTO
     {
         if ($expense->status !== 'draft') {
             throw ValidationException::withMessages([
@@ -55,11 +72,22 @@ final class ManageExpenses
 
             Audit::record($company, $saved->branch_id, 'biaya.setujui', 'expense', $saved->id);
 
+            if ($saved->user !== null) {
+                Notifier::toUser(
+                    $company,
+                    $saved->user,
+                    'biaya.disetujui',
+                    'Biaya '.$saved->description.' disetujui.',
+                    null,
+                    '/expenses',
+                );
+            }
+
             return ExpenseDTO::fromModel($saved);
         });
     }
 
-    public function reject(Company $company, Expense $expense): ExpenseDTO
+    public function reject(Company $company, Expense $expense, ?User $decider = null): ExpenseDTO
     {
         if ($expense->status !== 'draft') {
             throw ValidationException::withMessages([
@@ -71,6 +99,17 @@ final class ManageExpenses
 
         $saved = $this->expenses->saveExpense($expense);
         Audit::record($company, $saved->branch_id, 'biaya.tolak', 'expense', $saved->id);
+
+        if ($saved->user !== null) {
+            Notifier::toUser(
+                $company,
+                $saved->user,
+                'biaya.ditolak',
+                'Biaya '.$saved->description.' ditolak.',
+                null,
+                '/expenses',
+            );
+        }
 
         return ExpenseDTO::fromModel($saved);
     }

@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Application\Report\UseCases\ConsolidationReport;
 use App\Application\Report\UseCases\DailyReport;
 use App\Application\Report\UseCases\RebuildDailySummary;
+use App\Application\Report\UseCases\TopProducts;
 use App\Domain\Branch\Repositories\BranchRepositoryInterface;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
@@ -31,6 +32,35 @@ class ReportController extends Controller
         return ApiResponse::success(
             $useCase($company, $validated['from'], $validated['to'], $branchId),
             'Laporan harian.'
+        );
+    }
+
+    public function topProducts(
+        Request $request,
+        Company $company,
+        TopProducts $useCase,
+        BranchRepositoryInterface $branches,
+    ): JsonResponse {
+        $validated = $request->validate([
+            'from' => ['required', 'date'],
+            'to' => ['required', 'date', 'after_or_equal:from'],
+            'branch_id' => ['nullable', 'integer'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:50'],
+        ]);
+
+        $branchId = isset($validated['branch_id'])
+            ? ($branches->findForCompany($company, (int) $validated['branch_id'])?->id ?? abort(404))
+            : null;
+
+        return ApiResponse::success(
+            $useCase(
+                $company,
+                $validated['from'],
+                $validated['to'],
+                $branchId,
+                (int) ($validated['limit'] ?? 10),
+            ),
+            'Top produk.'
         );
     }
 

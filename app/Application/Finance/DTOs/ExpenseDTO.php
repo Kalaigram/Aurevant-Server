@@ -18,6 +18,9 @@ final readonly class ExpenseDTO
         public string $date,
         public string $description,
         public string $status,
+        public ?int $userId = null,
+        public ?string $proofUrl = null,
+        public ?int $recurringExpenseId = null,
     ) {}
 
     public static function fromModel(Expense $expense): self
@@ -32,6 +35,9 @@ final readonly class ExpenseDTO
             date: $expense->date->toDateString(),
             description: $expense->description,
             status: $expense->status,
+            userId: $expense->user_id,
+            proofUrl: $expense->proof_path !== null ? '/storage/'.$expense->proof_path : null,
+            recurringExpenseId: $expense->recurring_expense_id,
         );
     }
 }

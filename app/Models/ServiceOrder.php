@@ -17,6 +17,7 @@ class ServiceOrder extends Model
         'company_id',
         'branch_id',
         'customer_id',
+        'service_package_id',
         'assignee_id',
         'sale_id',
         'status',
@@ -46,6 +47,11 @@ class ServiceOrder extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function servicePackage(): BelongsTo
+    {
+        return $this->belongsTo(ServicePackage::class);
     }
 
     public function assignee(): BelongsTo

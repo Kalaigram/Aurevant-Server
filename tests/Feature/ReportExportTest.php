@@ -62,7 +62,7 @@ class ReportExportTest extends TestCase
         $today = now()->toDateString();
         $base = "/api/v1/companies/{$company->id}/reports";
 
-        foreach (['daily', 'cash-flow', 'balance-sheet', 'trial-balance', 'consolidation'] as $report) {
+        foreach (['daily', 'cash-flow', 'balance-sheet', 'trial-balance', 'top-products', 'consolidation'] as $report) {
             $response = $this->actingAs($user, 'sanctum')
                 ->get("{$base}/{$report}/export?from={$today}&to={$today}&format=xlsx");
 

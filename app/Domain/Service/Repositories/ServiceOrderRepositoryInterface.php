@@ -12,7 +12,14 @@ use Illuminate\Pagination\LengthAwarePaginator;
 interface ServiceOrderRepositoryInterface
 {
     /** @return LengthAwarePaginator<int, ServiceOrder> */
-    public function paginateForBranch(Branch $branch, int $perPage, ?string $status = null, ?string $q = null): LengthAwarePaginator;
+    public function paginateForBranch(
+        Branch $branch,
+        int $perPage,
+        ?string $status = null,
+        ?string $q = null,
+        ?string $scheduledFrom = null,
+        ?string $scheduledTo = null,
+    ): LengthAwarePaginator;
 
     public function findForBranch(Branch $branch, int $id): ?ServiceOrder;
 

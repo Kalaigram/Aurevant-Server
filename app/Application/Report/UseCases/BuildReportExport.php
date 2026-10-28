@@ -19,6 +19,7 @@ final class BuildReportExport
         private CashFlow $cashFlow,
         private BalanceSheet $balanceSheet,
         private TrialBalance $trialBalance,
+        private TopProducts $topProducts,
         private DailyReport $daily,
         private ConsolidationReport $consolidation,
     ) {}
@@ -41,6 +42,7 @@ final class BuildReportExport
             'cash-flow' => $this->cashFlowDocument($company, $from, $to, $branchId, $branchName, $period),
             'balance-sheet' => $this->balanceSheetDocument($company, $to),
             'trial-balance' => $this->trialBalanceDocument($company, $from, $to, $period),
+            'top-products' => $this->topProductsDocument($company, $from, $to, $branchId, $branchName, $period),
             'consolidation' => $this->consolidationDocument($company, $from, $to, $period),
             default => abort(404),
         };
@@ -276,6 +278,51 @@ final class BuildReportExport
         );
     }
 
+    private function topProductsDocument(
+        Company $company,
+        string $from,
+        string $to,
+        ?int $branchId,
+        ?string $branchName,
+        string $period,
+    ): ReportExportDocument {
+        $result = ($this->topProducts)($company, $from, $to, $branchId, 25);
+        $rows = array_map(
+            fn (array $row, int $index): array => [
+                (string) ($index + 1),
+                (string) $row['code'],
+                (string) $row['name'],
+                (float) $row['qty'],
+                (float) $row['revenue'],
+                (float) $row['hpp'],
+                (float) $row['margin'],
+            ],
+            $result['rows'],
+            array_keys($result['rows']),
+        );
+
+        return new ReportExportDocument(
+            title: 'Top produk & jasa',
+            periodLabel: "Periode {$period}",
+            filename: "top-produk-{$from}_{$to}",
+            branchName: $branchName,
+            summary: [
+                $this->number('Jumlah terjual', $result['totals']['qty']),
+                $this->money('Omzet', $result['totals']['revenue']),
+                $this->money('HPP', $result['totals']['hpp']),
+                $this->money('Marjin', $result['totals']['margin']),
+            ],
+            sections: [
+                [
+                    'title' => 'Produk terlaris',
+                    'headings' => ['#', 'Kode', 'Nama', 'Qty', 'Omzet', 'HPP', 'Marjin'],
+                    'types' => ['number', 'text', 'text', 'number', 'money', 'money', 'money'],
+                    'rows' => $rows,
+                ],
+            ],
+        );
+    }
+
     private function consolidationDocument(
         Company $company,
         string $from,
@@ -289,7 +336,9 @@ final class BuildReportExport
                 "{$row['branchCode']} - {$row['branchName']}",
                 (float) $row['omzet'],
                 (int) $row['transactions'],
+                (float) $row['avgTicket'],
                 (float) $row['hpp'],
+                (float) $row['margin'],
                 (float) $row['refunds'],
                 (float) $row['net'],
             ],
@@ -300,7 +349,9 @@ final class BuildReportExport
             'Total grup',
             (float) $grand['omzet'],
             (int) $grand['transactions'],
+            (float) $grand['avgTicket'],
             (float) $grand['hpp'],
+            (float) $grand['margin'],
             (float) $grand['refunds'],
             (float) $grand['net'],
         ];
@@ -313,14 +364,16 @@ final class BuildReportExport
             summary: [
                 $this->money('Omzet grup', $grand['omzet']),
                 $this->number('Transaksi', $grand['transactions']),
+                $this->money('Rata-rata / transaksi', $grand['avgTicket']),
                 $this->money('HPP', $grand['hpp']),
+                $this->money('Marjin', $grand['margin']),
                 $this->money('Net omzet', $grand['net']),
             ],
             sections: [
                 [
                     'title' => 'Konsolidasi semua cabang',
-                    'headings' => ['Cabang', 'Omzet', 'Trx', 'HPP', 'Refund', 'Net'],
-                    'types' => ['text', 'money', 'number', 'money', 'money', 'money'],
+                    'headings' => ['Cabang', 'Omzet', 'Trx', 'Rata-rata', 'HPP', 'Marjin', 'Refund', 'Net'],
+                    'types' => ['text', 'money', 'number', 'money', 'money', 'money', 'money', 'money'],
                     'rows' => $rows,
                 ],
             ],

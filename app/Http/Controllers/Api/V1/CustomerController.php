@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Application\Service\DTOs\CustomerDTO;
 use App\Application\Service\UseCases\CreateCustomer;
+use App\Application\Service\UseCases\CustomerProfile;
 use App\Application\Service\UseCases\DeleteCustomer;
 use App\Application\Service\UseCases\ListCustomers;
 use App\Application\Service\UseCases\UpdateCustomer;
@@ -49,6 +50,14 @@ class CustomerController extends Controller
         return ApiResponse::success(
             CustomerDTO::fromModel($this->scoped($company, $customer, $customers)),
             'Detail pelanggan.'
+        );
+    }
+
+    public function profile(Company $company, int $customer, CustomerRepositoryInterface $customers, CustomerProfile $useCase): JsonResponse
+    {
+        return ApiResponse::success(
+            $useCase($company, $this->scoped($company, $customer, $customers)),
+            'Profil pelanggan.'
         );
     }
 

@@ -6,6 +6,7 @@ namespace App\Application\Billing\UseCases;
 
 use App\Application\Audit\Audit;
 use App\Application\Billing\DTOs\SubscriptionDTO;
+use App\Application\Billing\Services\SubscriptionLimits;
 use App\Domain\Billing\Repositories\SubscriptionRepositoryInterface;
 use App\Models\Company;
 use App\Models\Plan;
@@ -15,13 +16,14 @@ final class ChangeSubscription
 {
     public function __construct(
         private SubscriptionRepositoryInterface $billing,
+        private SubscriptionLimits $limits,
     ) {}
 
     public function show(Company $company): SubscriptionDTO
     {
         $subscription = $this->billing->findForCompany($company) ?? abort(404);
 
-        return SubscriptionDTO::fromModel($subscription);
+        return SubscriptionDTO::fromModel($subscription, $this->limits->usage($company));
     }
 
     public function change(Company $company, string $status, ?int $planId, ?string $endsAt): SubscriptionDTO
@@ -44,6 +46,6 @@ final class ChangeSubscription
         $saved = $this->billing->save($subscription);
         Audit::record($company, null, 'langganan.ubah', 'subscription', $saved->id, null, ['status' => $status]);
 
-        return SubscriptionDTO::fromModel($saved);
+        return SubscriptionDTO::fromModel($saved, $this->limits->usage($company));
     }
 }

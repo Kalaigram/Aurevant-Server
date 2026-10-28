@@ -133,6 +133,12 @@ class PayrollTest extends TestCase
         ])->assertUnprocessable();
         $api()->postJson("{$base}/payroll-periods/{$periodId}/pay")->assertOk()
             ->assertJsonPath('data.status', 'dibayar');
+
+        $this->assertDatabaseHas('notifications', [
+            'company_id' => $company->id,
+            'user_id' => $staff->id,
+            'type' => 'payroll.dibayar',
+        ]);
     }
 
     public function test_komponen_crud_dan_assign(): void

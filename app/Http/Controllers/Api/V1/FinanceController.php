@@ -80,10 +80,14 @@ class FinanceController extends Controller
             'method' => ['sometimes', 'string', Rule::in(['tunai', 'transfer'])],
             'date' => ['required', 'date'],
             'description' => ['required', 'string', 'max:500'],
+            'proof' => ['sometimes', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:2048'],
         ]);
 
+        $proofPath = $request->file('proof')?->store('bukti-biaya', 'public') ?: null;
+        unset($validated['proof']);
+
         return ApiResponse::success(
-            $useCase->create($company, $validated),
+            $useCase->create($company, $validated, $request->user(), $proofPath),
             'Biaya dicatat (draft).',
             201
         );
@@ -96,17 +100,17 @@ class FinanceController extends Controller
         return ApiResponse::success(ExpenseDTO::fromModel($found), 'Detail biaya.');
     }
 
-    public function approve(Company $company, int $expense, ExpenseRepositoryInterface $expenses, ManageExpenses $useCase): JsonResponse
+    public function approve(Request $request, Company $company, int $expense, ExpenseRepositoryInterface $expenses, ManageExpenses $useCase): JsonResponse
     {
         $found = $expenses->findExpense($company, $expense) ?? abort(404);
 
-        return ApiResponse::success($useCase->approve($company, $found), 'Biaya disetujui.');
+        return ApiResponse::success($useCase->approve($company, $found, $request->user()), 'Biaya disetujui.');
     }
 
-    public function reject(Company $company, int $expense, ExpenseRepositoryInterface $expenses, ManageExpenses $useCase): JsonResponse
+    public function reject(Request $request, Company $company, int $expense, ExpenseRepositoryInterface $expenses, ManageExpenses $useCase): JsonResponse
     {
         $found = $expenses->findExpense($company, $expense) ?? abort(404);
 
-        return ApiResponse::success($useCase->reject($company, $found), 'Biaya ditolak.');
+        return ApiResponse::success($useCase->reject($company, $found, $request->user()), 'Biaya ditolak.');
     }
 }

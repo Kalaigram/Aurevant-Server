@@ -8,6 +8,7 @@ use App\Application\Auth\DTOs\UserDTO;
 use App\Application\Auth\UseCases\ChangePassword;
 use App\Application\Auth\UseCases\DeleteUserAvatar;
 use App\Application\Auth\UseCases\LoginUser;
+use App\Application\Auth\UseCases\ManageTwoFactor;
 use App\Application\Auth\UseCases\RegisterUser;
 use App\Application\Auth\UseCases\RequestPasswordReset;
 use App\Application\Auth\UseCases\ResetPassword;
@@ -45,10 +46,17 @@ class AuthController extends Controller
         $validated = $request->validate([
             'login' => ['required', 'string'],
             'password' => ['required', 'string'],
+            'two_factor_code' => ['sometimes', 'nullable', 'string', 'max:50'],
+            'device_name' => ['sometimes', 'nullable', 'string', 'max:100'],
         ]);
 
         return ApiResponse::success(
-            $useCase($validated['login'], $validated['password']),
+            $useCase(
+                $validated['login'],
+                $validated['password'],
+                $validated['two_factor_code'] ?? null,
+                $validated['device_name'] ?? null,
+            ),
             'Login berhasil.'
         );
     }
@@ -117,6 +125,92 @@ class AuthController extends Controller
         $useCase($validated['email'], $validated['token'], $validated['password']);
 
         return ApiResponse::success(null, 'Password berhasil diatur ulang. Silakan masuk kembali.');
+    }
+
+    public function sessions(Request $request): JsonResponse
+    {
+        $currentId = $request->user()->currentAccessToken()?->id;
+
+        $sessions = $request->user()->tokens()
+            ->orderByDesc('last_used_at')
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn ($token) => [
+                'id' => $token->id,
+                'name' => $token->name,
+                'createdAt' => $token->created_at?->toIso8601String(),
+                'lastUsedAt' => $token->last_used_at?->toIso8601String(),
+                'isCurrent' => $token->id === $currentId,
+            ]);
+
+        return ApiResponse::success($sessions, 'Daftar sesi.');
+    }
+
+    public function revokeSession(Request $request, int $token): JsonResponse
+    {
+        $currentId = $request->user()->currentAccessToken()?->id;
+
+        if ($token === $currentId) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'token' => 'Gunakan logout untuk mengakhiri sesi yang sedang dipakai.',
+            ]);
+        }
+
+        $found = $request->user()->tokens()->whereKey($token)->first();
+
+        if ($found === null) {
+            abort(404);
+        }
+
+        $found->delete();
+
+        return ApiResponse::success(null, 'Sesi diakhiri.');
+    }
+
+    public function revokeOtherSessions(Request $request): JsonResponse
+    {
+        $currentId = $request->user()->currentAccessToken()?->id;
+        $query = $request->user()->tokens();
+
+        if ($currentId !== null) {
+            $query->whereKeyNot($currentId);
+        }
+
+        $deleted = $query->delete();
+
+        return ApiResponse::success(['revoked' => $deleted], 'Sesi lain diakhiri.');
+    }
+
+    public function twoFactorStatus(Request $request, ManageTwoFactor $useCase): JsonResponse
+    {
+        return ApiResponse::success($useCase->status($request->user()), 'Status 2FA.');
+    }
+
+    public function twoFactorSetup(Request $request, ManageTwoFactor $useCase): JsonResponse
+    {
+        return ApiResponse::success($useCase->setup($request->user()), 'Pindai kode QR lalu masukkan kode 6 digit.');
+    }
+
+    public function twoFactorEnable(Request $request, ManageTwoFactor $useCase): JsonResponse
+    {
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:10'],
+        ]);
+
+        $useCase->enable($request->user(), $validated['code']);
+
+        return ApiResponse::success(['enabled' => true], '2FA aktif.');
+    }
+
+    public function twoFactorDisable(Request $request, ManageTwoFactor $useCase): JsonResponse
+    {
+        $validated = $request->validate([
+            'password' => ['required', 'string'],
+        ]);
+
+        $useCase->disable($request->user(), $validated['password']);
+
+        return ApiResponse::success(['enabled' => false], '2FA nonaktif.');
     }
 
     public function changePassword(Request $request, ChangePassword $useCase): JsonResponse

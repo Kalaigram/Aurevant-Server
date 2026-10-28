@@ -7,6 +7,7 @@ namespace App\Application\Employee\UseCases;
 use App\Application\Access\DTOs\AssignmentDTO;
 use App\Application\Audit\Audit;
 use App\Application\Auth\DTOs\UserDTO;
+use App\Application\Billing\Services\SubscriptionLimits;
 use App\Application\Employee\DTOs\CreatedEmployee;
 use App\Domain\Access\Repositories\AssignmentRepositoryInterface;
 use App\Domain\Access\Repositories\RoleRepositoryInterface;
@@ -24,6 +25,7 @@ final class CreateEmployee
         private RoleRepositoryInterface $roles,
         private BranchRepositoryInterface $branches,
         private AssignmentRepositoryInterface $assignments,
+        private SubscriptionLimits $limits,
     ) {}
 
     public function __invoke(
@@ -36,6 +38,8 @@ final class CreateEmployee
         ?int $roleId,
         ?string $ptkpStatus,
     ): CreatedEmployee {
+        $this->limits->assertCanAddEmployee($company);
+
         if ($branchId !== null && $this->branches->findForCompany($company, $branchId) === null) {
             abort(404);
         }
